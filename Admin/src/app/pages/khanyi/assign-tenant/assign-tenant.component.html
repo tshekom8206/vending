@@ -1,0 +1,224 @@
+<div class="container-fluid">
+  <!-- Page Header -->
+  <div class="row align-items-center mb-4">
+    <div class="col">
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-2">
+          <li class="breadcrumb-item">
+            <a routerLink="/khanyi/estates" class="text-decoration-none">
+              <i class="ti ti-building me-1"></i>Estates
+            </a>
+          </li>
+          <li class="breadcrumb-item">
+            <a [routerLink]="['/khanyi/estates', estateId, 'units']" class="text-decoration-none">
+              {{ getEstateName() }}
+            </a>
+          </li>
+          <li class="breadcrumb-item active" aria-current="page">
+            Assign Tenant
+          </li>
+        </ol>
+      </nav>
+      <h1 class="h3 mb-0 text-gray-800">
+        <i class="ti ti-user-plus me-2 text-info"></i>
+        Assign Tenant
+      </h1>
+      <p class="mb-0 text-muted" *ngIf="unit">
+        Assign a tenant to unit {{ unit?.unitNumber }}
+      </p>
+    </div>
+    <div class="col-auto">
+      <button type="button" class="btn btn-outline-secondary me-2" (click)="onCancel()">
+        <i class="ti ti-arrow-left me-2"></i>Back to Units
+      </button>
+    </div>
+  </div>
+
+  <!-- Unit Info Card -->
+  <div class="row mb-4" *ngIf="unit">
+    <div class="col-12">
+      <div class="card border-0 shadow-sm bg-light">
+        <div class="card-body py-3">
+          <div class="row align-items-center">
+            <div class="col-md-6">
+              <h6 class="card-title mb-1 text-info">Unit {{ unit?.unitNumber }}</h6>
+              <p class="text-muted mb-0">
+                <i class="ti ti-building me-1"></i>
+                {{ getEstateName() }}
+              </p>
+            </div>
+            <div class="col-md-6 text-end">
+              <span class="badge" [class]="getStatusClass(unit?.status || '')">{{ unit?.status }}</span>
+              <br>
+              <small class="text-muted" *ngIf="unit?.specifications?.bedrooms">
+                {{ unit?.specifications?.bedrooms }} bed, {{ unit?.specifications?.bathrooms }} bath
+              </small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Error Alert -->
+  <div class="alert alert-danger" *ngIf="error">
+    <i class="ti ti-alert-circle me-2"></i>{{ error }}
+  </div>
+
+  <!-- Assign Tenant Form -->
+  <div class="row">
+    <div class="col-lg-8">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white">
+          <h5 class="card-title mb-0">
+            <i class="ti ti-forms me-2 text-info"></i>Tenant Assignment Details
+          </h5>
+        </div>
+        <form [formGroup]="assignForm" (ngSubmit)="onSubmit()">
+          <div class="card-body">
+            <div class="row">
+              <!-- Tenant Selection -->
+              <div class="col-12 mb-3">
+                <label for="tenantId" class="form-label">Select Tenant <span class="text-danger">*</span></label>
+                <select
+                  class="form-select"
+                  id="tenantId"
+                  formControlName="tenantId"
+                  [class.is-invalid]="getFieldError('tenantId')">
+                  <option value="">-- Select a tenant --</option>
+                  <option *ngFor="let tenant of availableTenants" [value]="tenant.id">
+                    {{ tenant.firstName }} {{ tenant.lastName }} - {{ tenant.email }}
+                  </option>
+                </select>
+                <div class="invalid-feedback">{{ getFieldError('tenantId') }}</div>
+                <small class="form-text text-muted">
+                  Only tenants without assigned units are shown
+                </small>
+              </div>
+
+              <!-- Lease Dates -->
+              <div class="col-md-6 mb-3">
+                <label for="startDate" class="form-label">Lease Start Date <span class="text-danger">*</span></label>
+                <input
+                  type="date"
+                  class="form-control"
+                  id="startDate"
+                  formControlName="startDate"
+                  [class.is-invalid]="getFieldError('startDate')">
+                <div class="invalid-feedback">{{ getFieldError('startDate') }}</div>
+              </div>
+
+              <div class="col-md-6 mb-3">
+                <label for="endDate" class="form-label">Lease End Date <span class="text-danger">*</span></label>
+                <input
+                  type="date"
+                  class="form-control"
+                  id="endDate"
+                  formControlName="endDate"
+                  [class.is-invalid]="getFieldError('endDate')">
+                <div class="invalid-feedback">{{ getFieldError('endDate') }}</div>
+              </div>
+
+              <!-- Financial Details -->
+              <div class="col-md-6 mb-3">
+                <label for="monthlyRent" class="form-label">Monthly Rent (ZAR) <span class="text-danger">*</span></label>
+                <input
+                  type="number"
+                  class="form-control"
+                  id="monthlyRent"
+                  formControlName="monthlyRent"
+                  min="0"
+                  step="0.01"
+                  placeholder="0.00"
+                  [class.is-invalid]="getFieldError('monthlyRent')">
+                <div class="invalid-feedback">{{ getFieldError('monthlyRent') }}</div>
+              </div>
+
+              <div class="col-md-6 mb-3">
+                <label for="deposit" class="form-label">Security Deposit (ZAR) <span class="text-danger">*</span></label>
+                <input
+                  type="number"
+                  class="form-control"
+                  id="deposit"
+                  formControlName="deposit"
+                  min="0"
+                  step="0.01"
+                  placeholder="0.00"
+                  [class.is-invalid]="getFieldError('deposit')">
+                <div class="invalid-feedback">{{ getFieldError('deposit') }}</div>
+              </div>
+
+              <!-- Notes -->
+              <div class="col-12 mb-3">
+                <label for="notes" class="form-label">Additional Notes</label>
+                <textarea
+                  class="form-control"
+                  id="notes"
+                  formControlName="notes"
+                  rows="3"
+                  placeholder="Any additional notes or special terms..."></textarea>
+                <small class="form-text text-muted">Optional notes about the lease agreement</small>
+              </div>
+            </div>
+          </div>
+
+          <div class="card-footer bg-white">
+            <div class="d-flex justify-content-end gap-2">
+              <button
+                type="button"
+                class="btn btn-outline-secondary"
+                (click)="onCancel()"
+                [disabled]="loading">
+                <i class="ti ti-x me-2"></i>Cancel
+              </button>
+              <button
+                type="submit"
+                class="btn btn-success"
+                [disabled]="!assignForm.valid || loading">
+                <i class="ti ti-user-plus me-2"></i>
+                <span *ngIf="!loading">Assign Tenant</span>
+                <span *ngIf="loading">
+                  <i class="spinner-border spinner-border-sm me-2"></i>Assigning...
+                </span>
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Help Card -->
+    <div class="col-lg-4">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-info text-white">
+          <h6 class="card-title mb-0">
+            <i class="ti ti-info-circle me-2"></i>Tenant Assignment Info
+          </h6>
+        </div>
+        <div class="card-body">
+          <div class="mb-3">
+            <h6 class="text-info">What happens when you assign a tenant?</h6>
+            <ul class="list-unstyled small text-muted">
+              <li><i class="ti ti-check text-success me-2"></i>Unit status changes to "Occupied"</li>
+              <li><i class="ti ti-check text-success me-2"></i>Tenant gets access to the unit</li>
+              <li><i class="ti ti-check text-success me-2"></i>Lease agreement is created</li>
+              <li><i class="ti ti-check text-success me-2"></i>Billing starts from lease start date</li>
+            </ul>
+          </div>
+          <div class="mb-3">
+            <h6 class="text-info">Prerequisites</h6>
+            <ul class="list-unstyled small text-muted">
+              <li><i class="ti ti-point text-info me-2"></i>Unit must be available</li>
+              <li><i class="ti ti-point text-info me-2"></i>Tenant must be registered</li>
+              <li><i class="ti ti-point text-info me-2"></i>Tenant cannot have existing lease</li>
+            </ul>
+          </div>
+          <div class="alert alert-warning" role="alert">
+            <i class="ti ti-alert-triangle me-2"></i>
+            <small>Make sure all lease terms are agreed upon before assignment.</small>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,285 @@
+<div class="container-fluid" (click)="closeDropdown()">
+  <!-- Page Header with Estate Info -->
+  <div class="row align-items-center mb-4">
+    <div class="col">
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-2">
+          <li class="breadcrumb-item">
+            <a routerLink="/khanyi/estates" class="text-decoration-none">
+              <i class="ti ti-building me-1"></i>Estates
+            </a>
+          </li>
+          <li class="breadcrumb-item active" aria-current="page">
+            {{ estate?.name || 'Units Management' }}
+          </li>
+        </ol>
+      </nav>
+      <h1 class="h3 mb-0 text-gray-800">
+        <i class="ti ti-building-community me-2 text-info"></i>
+        Units Management
+      </h1>
+      <p class="mb-0 text-muted" *ngIf="estate">
+        Manage units for {{ estate.name }} - {{ estate.address.city }}
+      </p>
+    </div>
+    <div class="col-auto" *ngIf="canCreateUnit()">
+      <button class="btn btn-info" (click)="navigateToAddUnit()">
+        <i class="ti ti-plus me-2"></i>Add New Unit
+      </button>
+    </div>
+  </div>
+
+  <!-- Estate Summary Card -->
+  <div class="row mb-4" *ngIf="estate">
+    <div class="col-12">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-8">
+              <h5 class="card-title text-success mb-1">{{ estate.name }}</h5>
+              <p class="text-muted mb-2">
+                <i class="ti ti-map-pin me-1"></i>
+                {{ estate.address.street }}, {{ estate.address.city }}, {{ estate.address.province }}
+              </p>
+              <span class="badge me-2" [class]="estate.isActive ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger'">
+                {{ estate.isActive ? 'Active' : 'Inactive' }}
+              </span>
+              <span class="badge bg-info-subtle text-info">{{ estate.type }}</span>
+            </div>
+            <div class="col-md-4">
+              <div class="row text-center">
+                <div class="col-4">
+                  <h4 class="mb-1 text-primary">{{ estate.totalUnits }}</h4>
+                  <small class="text-muted">Total Units</small>
+                </div>
+                <div class="col-4">
+                  <h4 class="mb-1 text-success">{{ estate.occupiedUnits }}</h4>
+                  <small class="text-muted">Occupied</small>
+                </div>
+                <div class="col-4">
+                  <h4 class="mb-1 text-info">{{ estate.totalUnits - estate.occupiedUnits }}</h4>
+                  <small class="text-muted">Available</small>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Search and Filters -->
+  <div class="row mb-4">
+    <div class="col-md-4">
+      <div class="input-group">
+        <span class="input-group-text">
+          <i class="ti ti-search"></i>
+        </span>
+        <input
+          type="text"
+          class="form-control"
+          placeholder="Search units by number or tenant..."
+          [(ngModel)]="searchTerm"
+          (ngModelChange)="loadUnits()">
+      </div>
+    </div>
+    <div class="col-md-2">
+      <select class="form-select" [(ngModel)]="statusFilter" (ngModelChange)="loadUnits()">
+        <option value="">All Status</option>
+        <option value="Available">Available</option>
+        <option value="Occupied">Occupied</option>
+        <option value="Maintenance">Maintenance</option>
+        <option value="Reserved">Reserved</option>
+      </select>
+    </div>
+    <div class="col-md-2">
+      <select class="form-select" [(ngModel)]="bedroomsFilter" (ngModelChange)="loadUnits()">
+        <option value="">Any Bedrooms</option>
+        <option value="0">Studio</option>
+        <option value="1">1 Bedroom</option>
+        <option value="2">2 Bedrooms</option>
+        <option value="3">3 Bedrooms</option>
+        <option value="4">4+ Bedrooms</option>
+      </select>
+    </div>
+    <div class="col-md-2">
+      <select class="form-select" [(ngModel)]="bathroomsFilter" (ngModelChange)="loadUnits()">
+        <option value="">Any Bathrooms</option>
+        <option value="1">1 Bathroom</option>
+        <option value="2">2 Bathrooms</option>
+        <option value="3">3+ Bathrooms</option>
+      </select>
+    </div>
+    <div class="col-md-2">
+      <button class="btn btn-outline-secondary w-100" (click)="clearFilters()">
+        <i class="ti ti-filter-off me-1"></i>Clear
+      </button>
+    </div>
+  </div>
+
+  <div class="row align-items-center mb-3">
+    <div class="col">
+      <span class="text-muted">
+        {{ filteredUnits().length }} of {{ units.length }} units
+      </span>
+    </div>
+  </div>
+
+  <!-- Error Alert -->
+  <div *ngIf="error" class="alert alert-danger alert-dismissible fade show" role="alert">
+    <i class="ti ti-alert-circle me-2"></i>
+    {{ error }}
+    <button type="button" class="btn-close" (click)="error = ''"></button>
+  </div>
+
+  <!-- Loading Spinner -->
+  <div *ngIf="loading" class="text-center py-5">
+    <div class="spinner-border text-info" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+    <p class="text-muted mt-2">Loading units...</p>
+  </div>
+
+  <!-- Units Grid -->
+  <div *ngIf="!loading" class="row">
+    <div class="col-lg-4 col-md-6 mb-4" *ngFor="let unit of filteredUnits()">
+      <div class="card h-100 shadow-sm border-0">
+        <div class="card-header bg-white border-0 pb-0">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <h5 class="card-title mb-1 text-info">Unit {{ unit.unitNumber }}</h5>
+              <p class="text-muted small mb-0">
+                <i class="ti ti-home me-1"></i>
+                {{ getUnitDescription(unit) }}
+              </p>
+            </div>
+            <div class="dropdown position-relative">
+              <button class="btn btn-sm btn-outline-secondary" type="button" (click)="toggleDropdown(unit.id, $event)">
+                <i class="ti ti-dots-vertical"></i>
+              </button>
+              <ul class="dropdown-menu" [class.show]="isDropdownOpen(unit.id)" *ngIf="isDropdownOpen(unit.id)">
+                <li><a class="dropdown-item" (click)="viewUnit(unit); closeDropdown()">
+                  <i class="ti ti-eye me-2"></i>View Details
+                </a></li>
+                <li *ngIf="canEditUnit()"><hr class="dropdown-divider"></li>
+                <li *ngIf="canEditUnit()"><a class="dropdown-item" (click)="editUnit(unit); closeDropdown()">
+                  <i class="ti ti-edit me-2"></i>Edit Unit
+                </a></li>
+                <li *ngIf="canManageTenants() && unit.status === 'Available'"><hr class="dropdown-divider"></li>
+                <li *ngIf="canManageTenants() && unit.status === 'Available'"><a class="dropdown-item" (click)="assignTenant(unit); closeDropdown()">
+                  <i class="ti ti-user-plus me-2"></i>Assign Tenant
+                </a></li>
+                <li *ngIf="canManageTenants() && unit.status === 'Occupied'"><hr class="dropdown-divider"></li>
+                <li *ngIf="canManageTenants() && unit.status === 'Occupied'"><a class="dropdown-item text-warning" (click)="removeTenant(unit); closeDropdown()">
+                  <i class="ti ti-user-minus me-2"></i>Remove Tenant
+                </a></li>
+                <li *ngIf="canDeleteUnit()"><hr class="dropdown-divider"></li>
+                <li *ngIf="canDeleteUnit()"><a class="dropdown-item text-danger" (click)="deleteUnit(unit); closeDropdown()">
+                  <i class="ti ti-trash me-2"></i>Delete Unit
+                </a></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-body">
+          <!-- Unit Status -->
+          <div class="row mb-3">
+            <div class="col-6">
+              <span class="badge" [class]="getStatusClass(unit.status)">{{ unit.status }}</span>
+            </div>
+            <div class="col-6 text-end">
+              <span class="badge bg-light text-dark" *ngIf="unit.specifications?.floor">
+                Floor {{ unit.specifications.floor }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Tenant Info -->
+          <div class="mb-3" *ngIf="unit.status === 'Occupied' && getTenantName(unit)">
+            <div class="d-flex align-items-center">
+              <i class="ti ti-user me-2 text-muted"></i>
+              <div>
+                <strong class="text-primary">{{ getTenantName(unit) }}</strong>
+                <br>
+                <small class="text-muted">Current Tenant</small>
+              </div>
+            </div>
+          </div>
+
+          <!-- Unit Specifications -->
+          <div class="row mb-3 text-center">
+            <div class="col-4" *ngIf="unit.specifications?.bedrooms !== undefined">
+              <div>
+                <h6 class="mb-1 text-primary">{{ unit.specifications.bedrooms }}</h6>
+                <small class="text-muted">Bedrooms</small>
+              </div>
+            </div>
+            <div class="col-4" *ngIf="unit.specifications?.bathrooms !== undefined">
+              <div>
+                <h6 class="mb-1 text-info">{{ unit.specifications.bathrooms }}</h6>
+                <small class="text-muted">Bathrooms</small>
+              </div>
+            </div>
+            <div class="col-4" *ngIf="unit.specifications?.area?.size">
+              <div>
+                <h6 class="mb-1 text-success">{{ unit.specifications?.area?.size }}</h6>
+                <small class="text-muted">{{ unit.specifications?.area?.unit || 'm²' }}</small>
+              </div>
+            </div>
+          </div>
+
+          <!-- Rent Info -->
+          <div class="row text-center" *ngIf="getRentAmount(unit) > 0">
+            <div class="col-6">
+              <small class="text-muted d-block">Monthly Rent</small>
+              <strong class="text-success">{{ (estate?.tariff?.currency || 'ZAR') }}{{ getRentAmount(unit) }}</strong>
+            </div>
+            <div class="col-6" *ngIf="unit.lease?.deposit">
+              <small class="text-muted d-block">Deposit</small>
+              <strong class="text-info">{{ (estate?.tariff?.currency || 'ZAR') }}{{ unit.lease?.deposit }}</strong>
+            </div>
+          </div>
+
+          <!-- Amenities -->
+          <div class="mt-3" *ngIf="unit.amenities && unit.amenities.length > 0">
+            <small class="text-muted d-block mb-1">Amenities:</small>
+            <div class="d-flex flex-wrap gap-1">
+              <span class="badge bg-light text-dark small" *ngFor="let amenity of unit.amenities.slice(0, 3)">
+                {{ amenity }}
+              </span>
+              <span class="badge bg-secondary small" *ngIf="unit.amenities.length > 3">
+                +{{ unit.amenities.length - 3 }} more
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-footer bg-light border-0">
+          <small class="text-muted">
+            <i class="ti ti-calendar me-1"></i>
+            Added: {{ unit.createdAt | date:'short' }}
+          </small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Empty State -->
+  <div *ngIf="!loading && filteredUnits().length === 0" class="text-center py-5">
+    <div class="mb-3">
+      <i class="ti ti-building-off display-1 text-muted"></i>
+    </div>
+    <h4 class="text-muted">No units found</h4>
+    <p class="text-muted" *ngIf="searchTerm || statusFilter || bedroomsFilter || bathroomsFilter">
+      No units match your current filters.
+      <a href="#" (click)="clearFilters(); $event.preventDefault()" class="text-info">Clear filters</a>
+    </p>
+    <p class="text-muted" *ngIf="!searchTerm && !statusFilter && !bedroomsFilter && !bathroomsFilter">
+      This estate doesn't have any units yet. Start by adding your first unit.
+    </p>
+    <button class="btn btn-info" (click)="navigateToAddUnit()" *ngIf="canCreateUnit()">
+      <i class="ti ti-plus me-2"></i>Add First Unit
+    </button>
+  </div>
+</div>

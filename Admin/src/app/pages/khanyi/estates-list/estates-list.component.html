@@ -1,0 +1,192 @@
+<div class="container-fluid">
+  <!-- Page Header -->
+  <div class="row align-items-center mb-4">
+    <div class="col">
+      <h1 class="h3 mb-0 text-gray-800">
+        <i class="ti ti-building me-2 text-success"></i>
+        Estates Management
+      </h1>
+      <p class="mb-0 text-muted">Manage your real estate properties and electricity distribution</p>
+    </div>
+    <div class="col-auto" *ngIf="canCreateEstate()">
+      <button class="btn btn-success" (click)="navigateToAddEstate()">
+        <i class="ti ti-plus me-2"></i>Add New Estate
+      </button>
+    </div>
+  </div>
+
+  <!-- Search and Filters -->
+  <div class="row mb-4">
+    <div class="col-md-6">
+      <div class="input-group">
+        <span class="input-group-text">
+          <i class="ti ti-search"></i>
+        </span>
+        <input
+          type="text"
+          class="form-control"
+          placeholder="Search estates by name or city..."
+          [(ngModel)]="searchTerm">
+      </div>
+    </div>
+    <div class="col-md-6 text-end">
+      <span class="text-muted">
+        {{ filteredEstates().length }} of {{ estates.length }} estates
+      </span>
+    </div>
+  </div>
+
+  <!-- Error Alert -->
+  <div *ngIf="error" class="alert alert-danger alert-dismissible fade show" role="alert">
+    <i class="ti ti-alert-circle me-2"></i>
+    {{ error }}
+    <button type="button" class="btn-close" (click)="error = ''"></button>
+  </div>
+
+  <!-- Loading Spinner -->
+  <div *ngIf="loading" class="text-center py-5">
+    <div class="spinner-border text-success" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+    <p class="text-muted mt-2">Loading estates...</p>
+  </div>
+
+  <!-- Estates Grid -->
+  <div *ngIf="!loading" class="row">
+    <div class="col-lg-4 col-md-6 mb-4" *ngFor="let estate of filteredEstates()">
+      <div class="card h-100 shadow-sm border-0">
+        <div class="card-header bg-white border-0 pb-0">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <h5 class="card-title mb-1 text-success">{{ estate.name }}</h5>
+              <p class="text-muted small mb-0">
+                <i class="ti ti-map-pin me-1"></i>
+                {{ estate.address.street }}, {{ estate.address.city }}
+              </p>
+            </div>
+            <div class="d-flex gap-2">
+              <!-- Quick Action Buttons -->
+              <button class="btn btn-sm btn-outline-primary" type="button"
+                      (click)="manageUnits(estate)"
+                      title="Manage Units">
+                <i class="ti ti-building-community"></i>
+              </button>
+              <button class="btn btn-sm btn-outline-secondary" type="button"
+                      (click)="editEstate(estate)"
+                      title="Edit Estate">
+                <i class="ti ti-edit"></i>
+              </button>
+
+              <!-- Dropdown Menu -->
+              <div class="dropdown">
+                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button"
+                        [id]="'dropdown-' + estate.id"
+                        data-bs-toggle="dropdown"
+                        aria-expanded="false">
+                  <i class="ti ti-dots-vertical"></i>
+                </button>
+                <ul class="dropdown-menu" [attr.aria-labelledby]="'dropdown-' + estate.id">
+                  <li><button class="dropdown-item" type="button" (click)="manageUnits(estate)">
+                    <i class="ti ti-building-community me-2"></i>Manage Units
+                  </button></li>
+                  <li><hr class="dropdown-divider"></li>
+                  <li><button class="dropdown-item" type="button" (click)="editEstate(estate)">
+                    <i class="ti ti-edit me-2"></i>Edit Estate
+                  </button></li>
+                  <li><hr class="dropdown-divider"></li>
+                  <li><button class="dropdown-item text-danger" type="button" (click)="deleteEstate(estate)">
+                    <i class="ti ti-trash me-2"></i>Delete Estate
+                  </button></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-body">
+          <!-- Estate Type & Status -->
+          <div class="row mb-3">
+            <div class="col-6">
+              <span class="badge bg-info-subtle text-info">{{ estate.type }}</span>
+            </div>
+            <div class="col-6 text-end">
+              <span class="badge" [class]="estate.isActive ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger'">
+                {{ estate.isActive ? 'Active' : 'Inactive' }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Units Info -->
+          <div class="row mb-3">
+            <div class="col-6">
+              <div class="text-center">
+                <h4 class="mb-1 text-primary">{{ estate.totalUnits }}</h4>
+                <small class="text-muted">Total Units</small>
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="text-center">
+                <h4 class="mb-1 text-success">{{ estate.occupiedUnits }}</h4>
+                <small class="text-muted">Occupied</small>
+              </div>
+            </div>
+          </div>
+
+          <!-- Occupancy Rate -->
+          <div class="mb-3">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <small class="text-muted">Occupancy Rate</small>
+              <small [class]="getOccupancyClass(getOccupancyRate(estate))">
+                {{ getOccupancyRate(estate) }}%
+              </small>
+            </div>
+            <div class="progress" style="height: 6px;">
+              <div
+                class="progress-bar bg-success"
+                [style.width.%]="getOccupancyRate(estate)"
+                role="progressbar">
+              </div>
+            </div>
+          </div>
+
+          <!-- Tariff Info -->
+          <div class="row text-center">
+            <div class="col-6">
+              <small class="text-muted d-block">Rate per {{ estate.tariff.unit }}</small>
+              <strong class="text-success">{{ estate.tariff.currency }}{{ estate.tariff.rate }}</strong>
+            </div>
+            <div class="col-6">
+              <small class="text-muted d-block">Currency</small>
+              <strong class="text-info">{{ estate.tariff.currency }}</strong>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-footer bg-light border-0">
+          <small class="text-muted">
+            <i class="ti ti-calendar me-1"></i>
+            Created: {{ estate.createdAt | date:'short' }}
+          </small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Empty State -->
+  <div *ngIf="!loading && filteredEstates().length === 0" class="text-center py-5">
+    <div class="mb-3">
+      <i class="ti ti-building-off display-1 text-muted"></i>
+    </div>
+    <h4 class="text-muted">No estates found</h4>
+    <p class="text-muted" *ngIf="searchTerm">
+      No estates match your search "{{ searchTerm }}".
+      <a href="#" (click)="searchTerm = ''; $event.preventDefault()" class="text-success">Clear search</a>
+    </p>
+    <p class="text-muted" *ngIf="!searchTerm">
+      Get started by adding your first estate to the system.
+    </p>
+    <button class="btn btn-success" (click)="navigateToAddEstate()" *ngIf="canCreateEstate()">
+      <i class="ti ti-plus me-2"></i>Add First Estate
+    </button>
+  </div>
+</div>

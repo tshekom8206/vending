@@ -1,0 +1,433 @@
+<div class="container-fluid">
+  <!-- Page Header -->
+  <div class="row align-items-center mb-4">
+    <div class="col">
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-2">
+          <li class="breadcrumb-item">
+            <a routerLink="/khanyi/estates" class="text-decoration-none">
+              <i class="ti ti-building me-1"></i>Estates
+            </a>
+          </li>
+          <li class="breadcrumb-item">
+            <a [routerLink]="['/khanyi/estates', estateId, 'units']" class="text-decoration-none">
+              {{ estate?.name || 'Units' }}
+            </a>
+          </li>
+          <li class="breadcrumb-item active" aria-current="page">
+            {{ isEditMode ? 'Edit Unit' : 'Add Unit' }}
+          </li>
+        </ol>
+      </nav>
+      <h1 class="h3 mb-0 text-gray-800">
+        <i class="ti ti-home me-2 text-info"></i>
+        {{ isEditMode ? 'Edit Unit' : 'Add New Unit' }}
+      </h1>
+      <p class="mb-0 text-muted" *ngIf="estate">
+        {{ isEditMode ? 'Update unit details' : 'Add a new unit' }} for {{ estate?.name }}
+      </p>
+    </div>
+    <div class="col-auto">
+      <button type="button" class="btn btn-outline-secondary me-2" (click)="onCancel()">
+        <i class="ti ti-arrow-left me-2"></i>Back to Units
+      </button>
+    </div>
+  </div>
+
+  <!-- Estate Info Card -->
+  <div class="row mb-4" *ngIf="estate">
+    <div class="col-12">
+      <div class="card border-0 shadow-sm bg-light">
+        <div class="card-body py-3">
+          <div class="row align-items-center">
+            <div class="col-md-8">
+              <h6 class="card-title mb-1 text-success">{{ estate?.name }}</h6>
+              <p class="text-muted mb-0">
+                <i class="ti ti-map-pin me-1"></i>
+                {{ estate?.address?.street }}, {{ estate?.address?.city }}
+              </p>
+            </div>
+            <div class="col-md-4 text-end">
+              <span class="badge bg-info-subtle text-info">{{ estate?.type }}</span>
+              <span class="badge ms-2" [class]="estate?.isActive ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger'">
+                {{ estate?.isActive ? 'Active' : 'Inactive' }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Error Alert -->
+  <div *ngIf="error" class="alert alert-danger alert-dismissible fade show" role="alert">
+    <i class="ti ti-alert-circle me-2"></i>
+    {{ error }}
+    <button type="button" class="btn-close" (click)="error = ''"></button>
+  </div>
+
+  <!-- Loading Spinner -->
+  <div *ngIf="loading" class="text-center py-5">
+    <div class="spinner-border text-info" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+    <p class="text-muted mt-2">Loading unit details...</p>
+  </div>
+
+  <!-- Unit Form -->
+  <form [formGroup]="unitForm" (ngSubmit)="onSubmit()" *ngIf="!loading">
+    <div class="row">
+      <!-- Left Column -->
+      <div class="col-lg-8">
+        <!-- Basic Information -->
+        <div class="card shadow-sm border-0 mb-4">
+          <div class="card-header bg-white border-0">
+            <h5 class="card-title mb-0">
+              <i class="ti ti-info-circle me-2 text-primary"></i>
+              Basic Information
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label for="unitNumber" class="form-label">Unit Number <span class="text-danger">*</span></label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="unitNumber"
+                  formControlName="unitNumber"
+                  placeholder="e.g. A101, B-205"
+                  maxlength="20"
+                  [class.is-invalid]="getFieldError('unitNumber')">
+                <div class="invalid-feedback">{{ getFieldError('unitNumber') }}</div>
+              </div>
+              <div class="col-md-6 mb-3" *ngIf="isEditMode">
+                <label for="status" class="form-label">Status</label>
+                <select class="form-select" id="status" formControlName="status">
+                  <option *ngFor="let status of unitStatuses" [value]="status">{{ status }}</option>
+                </select>
+              </div>
+              <!-- Meter will be auto-generated when unit is created -->
+              <div class="col-md-6 mb-3">
+                <label for="floor" class="form-label">Floor</label>
+                <input
+                  type="number"
+                  class="form-control"
+                  id="floor"
+                  formControlName="specifications.floor"
+                  placeholder="0"
+                  min="0">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Unit Specifications -->
+        <div class="card shadow-sm border-0 mb-4">
+          <div class="card-header bg-white border-0">
+            <h5 class="card-title mb-0">
+              <i class="ti ti-home-2 me-2 text-info"></i>
+              Unit Specifications
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-4 mb-3">
+                <label for="bedrooms" class="form-label">Bedrooms</label>
+                <input
+                  type="number"
+                  class="form-control"
+                  id="bedrooms"
+                  formControlName="specifications.bedrooms"
+                  min="0"
+                  max="10"
+                  placeholder="0">
+              </div>
+              <div class="col-md-4 mb-3">
+                <label for="bathrooms" class="form-label">Bathrooms</label>
+                <input
+                  type="number"
+                  class="form-control"
+                  id="bathrooms"
+                  formControlName="specifications.bathrooms"
+                  min="0"
+                  max="10"
+                  placeholder="0">
+              </div>
+              <div class="col-md-4 mb-3">
+                <label for="areaSize" class="form-label">Area Size</label>
+                <div class="input-group">
+                  <input
+                    type="number"
+                    class="form-control"
+                    id="areaSize"
+                    formControlName="specifications.area.size"
+                    min="0"
+                    placeholder="0">
+                  <select class="form-select" formControlName="specifications.area.unit" style="max-width: 80px;">
+                    <option value="m²">m²</option>
+                    <option value="sqft">sqft</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label for="parkingSpaces" class="form-label">Parking Spaces</label>
+                <input
+                  type="number"
+                  class="form-control"
+                  id="parkingSpaces"
+                  formControlName="specifications.parking.spaces"
+                  min="0"
+                  placeholder="0">
+              </div>
+              <div class="col-md-6 mb-3">
+                <div class="row">
+                  <div class="col-6">
+                    <div class="form-check mt-4">
+                      <input
+                        class="form-check-input"
+                        type="checkbox"
+                        id="coveredParking"
+                        formControlName="specifications.parking.covered">
+                      <label class="form-check-label" for="coveredParking">
+                        Covered Parking
+                      </label>
+                    </div>
+                  </div>
+                  <div class="col-6">
+                    <div class="form-check mt-4">
+                      <input
+                        class="form-check-input"
+                        type="checkbox"
+                        id="hasBalcony"
+                        formControlName="specifications.hasBalcony">
+                      <label class="form-check-label" for="hasBalcony">
+                        Has Balcony
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <div class="form-check">
+                  <input
+                    class="form-check-input"
+                    type="checkbox"
+                    id="hasGarden"
+                    formControlName="specifications.hasGarden">
+                  <label class="form-check-label" for="hasGarden">
+                    Has Garden
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Charges and Pricing -->
+        <div class="card shadow-sm border-0 mb-4">
+          <div class="card-header bg-white border-0">
+            <h5 class="card-title mb-0">
+              <i class="ti ti-currency-dollar me-2 text-success"></i>
+              Charges and Pricing
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label for="monthlyRent" class="form-label">Monthly Rent</label>
+                <div class="input-group">
+                  <span class="input-group-text">{{ estate?.tariff?.currency || 'ZAR' }}</span>
+                  <input
+                    type="number"
+                    class="form-control"
+                    id="monthlyRent"
+                    formControlName="charges.monthlyRent"
+                    min="0"
+                    placeholder="0">
+                </div>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="deposit" class="form-label">Deposit</label>
+                <div class="input-group">
+                  <span class="input-group-text">{{ estate?.tariff?.currency || 'ZAR' }}</span>
+                  <input
+                    type="number"
+                    class="form-control"
+                    id="deposit"
+                    formControlName="charges.deposit"
+                    min="0"
+                    placeholder="0">
+                </div>
+              </div>
+            </div>
+
+            <!-- Additional Charges -->
+            <div class="mb-3">
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <label class="form-label mb-0">Additional Charges</label>
+                <button type="button" class="btn btn-sm btn-outline-success" (click)="addAdditionalCharge()">
+                  <i class="ti ti-plus me-1"></i>Add Charge
+                </button>
+              </div>
+
+              <div formArrayName="additionalCharges">
+                <div *ngFor="let charge of additionalCharges.controls; let i = index" [formGroupName]="i" class="card bg-light border-0 mb-2">
+                  <div class="card-body py-2">
+                    <div class="row align-items-center">
+                      <div class="col-md-4">
+                        <input
+                          type="text"
+                          class="form-control form-control-sm"
+                          formControlName="description"
+                          placeholder="Description">
+                      </div>
+                      <div class="col-md-3">
+                        <div class="input-group input-group-sm">
+                          <span class="input-group-text">{{ estate?.tariff?.currency || 'ZAR' }}</span>
+                          <input
+                            type="number"
+                            class="form-control"
+                            formControlName="amount"
+                            min="0"
+                            placeholder="0">
+                        </div>
+                      </div>
+                      <div class="col-md-3">
+                        <select class="form-select form-select-sm" formControlName="frequency">
+                          <option *ngFor="let freq of chargeFrequencies" [value]="freq">{{ freq }}</option>
+                        </select>
+                      </div>
+                      <div class="col-md-2">
+                        <button type="button" class="btn btn-sm btn-outline-danger" (click)="removeAdditionalCharge(i)">
+                          <i class="ti ti-trash"></i>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <small class="form-text text-muted" *ngIf="additionalCharges.length === 0">
+                No additional charges added. Click "Add Charge" to include utilities, maintenance fees, etc.
+              </small>
+            </div>
+          </div>
+        </div>
+
+        <!-- Amenities -->
+        <div class="card shadow-sm border-0 mb-4">
+          <div class="card-header bg-white border-0">
+            <h5 class="card-title mb-0">
+              <i class="ti ti-star me-2 text-warning"></i>
+              Amenities
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-4 mb-2" *ngFor="let amenity of amenityOptions">
+                <div class="form-check">
+                  <input
+                    class="form-check-input"
+                    type="checkbox"
+                    [id]="'amenity-' + amenity"
+                    [checked]="isAmenitySelected(amenity)"
+                    (change)="onAmenityChange(amenity, $any($event.target).checked)">
+                  <label class="form-check-label" [for]="'amenity-' + amenity">
+                    {{ amenity }}
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column -->
+      <div class="col-lg-4">
+        <!-- Status and Settings -->
+        <div class="card shadow-sm border-0 mb-4">
+          <div class="card-header bg-white border-0">
+            <h5 class="card-title mb-0">
+              <i class="ti ti-settings me-2 text-secondary"></i>
+              Settings
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="form-check">
+              <input
+                class="form-check-input"
+                type="checkbox"
+                id="isActive"
+                formControlName="isActive">
+              <label class="form-check-label" for="isActive">
+                <strong>Active Unit</strong>
+              </label>
+              <div class="form-text">Inactive units won't be available for new tenants</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Summary Card -->
+        <div class="card shadow-sm border-0 mb-4">
+          <div class="card-header bg-white border-0">
+            <h5 class="card-title mb-0">
+              <i class="ti ti-clipboard-list me-2 text-info"></i>
+              Summary
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="mb-2">
+              <strong>Unit:</strong> {{ unitForm.get('unitNumber')?.value || 'Not specified' }}
+            </div>
+            <div class="mb-2">
+              <strong>Type:</strong>
+              {{ unitForm.get('specifications.bedrooms')?.value || 0 }} bed,
+              {{ unitForm.get('specifications.bathrooms')?.value || 0 }} bath
+            </div>
+            <div class="mb-2" *ngIf="unitForm.get('specifications.area.size')?.value > 0">
+              <strong>Area:</strong>
+              {{ unitForm.get('specifications.area.size')?.value }}{{ unitForm.get('specifications.area.unit')?.value }}
+            </div>
+            <div class="mb-2" *ngIf="unitForm.get('charges.monthlyRent')?.value > 0">
+              <strong>Rent:</strong>
+              {{ estate?.tariff?.currency || 'ZAR' }}{{ unitForm.get('charges.monthlyRent')?.value }}
+            </div>
+            <div class="mb-2">
+              <strong>Amenities:</strong>
+              <span *ngIf="amenities.length === 0" class="text-muted">None selected</span>
+              <div *ngIf="amenities.length > 0">
+                <span class="badge bg-light text-dark me-1 mb-1" *ngFor="let amenity of amenities.controls">
+                  {{ amenity.value }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="card shadow-sm border-0">
+          <div class="card-body">
+            <button
+              type="submit"
+              class="btn btn-success w-100 mb-2"
+              [disabled]="saving || unitForm.invalid">
+              <span *ngIf="saving" class="spinner-border spinner-border-sm me-2"></span>
+              <i *ngIf="!saving" class="ti ti-check me-2"></i>
+              {{ isEditMode ? 'Update Unit' : 'Create Unit' }}
+            </button>
+            <button type="button" class="btn btn-outline-secondary w-100" (click)="onCancel()" [disabled]="saving">
+              <i class="ti ti-x me-2"></i>Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </form>
+</div>
