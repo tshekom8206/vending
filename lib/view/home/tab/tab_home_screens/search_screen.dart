@@ -7,7 +7,7 @@ import 'package:khanyi_vending_app/util/color_category.dart';
 import 'package:khanyi_vending_app/util/constant.dart';
 import 'package:khanyi_vending_app/util/constant_widget.dart';
 import 'package:khanyi_vending_app/view/home/tab/tab_home_screens/filterSheet/filter_screen.dart';
-import 'package:khanyi_vending_app/view/home/tab/tab_home_screens/complex_selection_screen.dart';
+import 'package:khanyi_vending_app/view/home/tab/tab_home_screens/electricity_purchase_screen.dart';
 
 import '../../../../model/search_histry_data.dart';
 
@@ -61,7 +61,12 @@ class _SearchScreenState extends State<SearchScreen> {
                       itemBuilder: (context, index) {
                         return GestureDetector(
                           onTap: (){
-                            Get.to(() => ComplexSelectionScreen());
+                            Get.to(() => ElectricityPurchaseScreen(
+                              complexName: 'Loading...', // Will be auto-filled from user data
+                              tariffRate: 'R0.00/kWh', // Will be auto-filled from user data
+                              meterNumber: 'Loading...', // Will be auto-filled from user data
+                              unitNumber: 'Loading...', // Will be auto-filled from user data
+                            ));
                           },
                           child: Row(
                             children: [

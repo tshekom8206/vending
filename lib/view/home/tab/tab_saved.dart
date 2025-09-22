@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:khanyi_vending_app/util/color_category.dart';
-import 'package:khanyi_vending_app/util/constant.dart';
 import 'package:khanyi_vending_app/util/constant_widget.dart';
 import 'package:khanyi_vending_app/model/incident_model.dart';
 import 'package:khanyi_vending_app/datafile/datafile.dart';
+import 'package:khanyi_vending_app/services/auth_service.dart';
+import 'package:khanyi_vending_app/services/purchase_service.dart';
+import 'package:khanyi_vending_app/services/incident_service.dart';
 
 class TabSaved extends StatefulWidget {
   const TabSaved({Key? key}) : super(key: key);
@@ -16,7 +18,12 @@ class TabSaved extends StatefulWidget {
 
 class _TabSavedState extends State<TabSaved> with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  
+
+  // Services
+  final AuthService _authService = Get.find<AuthService>();
+  final PurchaseService _purchaseService = Get.find<PurchaseService>();
+  final IncidentService _incidentService = Get.put(IncidentService());
+
   // Log Incident Form Controllers
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final TextEditingController _nameController = TextEditingController();
@@ -29,13 +36,37 @@ class _TabSavedState extends State<TabSaved> with SingleTickerProviderStateMixin
   
   final List<String> _issueTypes = [
     "Token not received",
-    "Incorrect amount charged",
-    "Meter not accepting token",
-    "Payment failed but amount deducted",
-    "App not working properly",
-    "Cannot select my complex",
-    "Other technical issue"
+    "Token rejected by meter",
+    "Meter not working",
+    "Payment failed",
+    "Double charged",
+    "App crashes",
+    "Feature not working",
+    "Other"
   ];
+
+  String _mapIssueTypeToCategory(String issueType) {
+    switch (issueType) {
+      case "Token not received":
+        return "Token Problem";
+      case "Token rejected by meter":
+        return "Token Problem";
+      case "Meter not working":
+        return "Meter Issue";
+      case "Payment failed":
+        return "Payment Issue";
+      case "Double charged":
+        return "Payment Issue";
+      case "App crashes":
+        return "App/System Error";
+      case "Feature not working":
+        return "App/System Error";
+      case "Other":
+        return "General Support";
+      default:
+        return "General Support";
+    }
+  }
   
   final List<String> _urgencyLevels = [
     "Low",
@@ -50,6 +81,93 @@ class _TabSavedState extends State<TabSaved> with SingleTickerProviderStateMixin
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _populateUserData();
+  }
+
+  Future<void> _populateUserData() async {
+    try {
+      // Auto-populate user's full name and phone if logged in
+      if (_authService.currentUser.value != null) {
+        final user = _authService.currentUser.value!;
+        _nameController.text = '${user.firstName} ${user.lastName}';
+        _phoneController.text = user.phone;
+
+        // Get user's meter number from their unit
+        final userUnit = await _authService.getUserUnit();
+        if (userUnit != null && userUnit['meter'] != null) {
+          final meterNumber = userUnit['meter']['meterNumber'];
+          if (meterNumber != null) {
+            _meterNumberController.text = meterNumber;
+          }
+        }
+
+        // Update the UI
+        if (mounted) {
+          setState(() {});
+        }
+      }
+    } catch (e) {
+      print('Error populating user data: $e');
+    }
+  }
+
+  Future<void> _submitIncident() async {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    try {
+      // Get user's unit information for the incident
+      String? unitId;
+      String? meterId;
+
+      final userUnit = await _authService.getUserUnit();
+      if (userUnit != null) {
+        unitId = userUnit['unit']?['id'];
+        meterId = userUnit['meter']?['_id'];
+      }
+
+      final incident = await _incidentService.createIncident(
+        category: _mapIssueTypeToCategory(_selectedIssueType),
+        subcategory: _selectedIssueType,
+        priority: _selectedUrgency,
+        subject: 'Electricity Vending Issue - $_selectedIssueType',
+        description: _descriptionController.text.trim(),
+        unitId: unitId,
+        meterId: meterId,
+      );
+
+      if (incident != null) {
+        // Clear the form
+        _nameController.clear();
+        _phoneController.clear();
+        _meterNumberController.clear();
+        _descriptionController.clear();
+        _selectedIssueType = "Token not received";
+        _selectedUrgency = "Medium";
+
+        // Repopulate user data
+        await _populateUserData();
+
+        // Switch to history tab to show the new incident
+        _tabController.animateTo(1);
+
+        // Refresh the incident list
+        await _incidentService.refreshIncidents();
+
+        if (mounted) {
+          setState(() {});
+        }
+      }
+    } catch (e) {
+      print('Error submitting incident: $e');
+      Get.snackbar(
+        'Error',
+        'Failed to submit incident. Please try again.',
+        backgroundColor: Colors.red.withValues(alpha: 0.8),
+        colorText: Colors.white,
+      );
+    }
   }
 
   @override
@@ -112,7 +230,7 @@ class _TabSavedState extends State<TabSaved> with SingleTickerProviderStateMixin
                   color: pacificBlue,
                   boxShadow: [
                     BoxShadow(
-                      color: pacificBlue.withOpacity(0.2),
+                      color: pacificBlue.withValues(alpha: 0.2),
                       blurRadius: 8,
                       offset: Offset(0, 2),
                     ),
@@ -312,7 +430,7 @@ class _TabSavedState extends State<TabSaved> with SingleTickerProviderStateMixin
                               urgencyColor = accentRed;
                               break;
                             case "High":
-                              urgencyColor = accentRed.withOpacity(0.7);
+                              urgencyColor = accentRed.withValues(alpha: 0.7);
                               break;
                             case "Medium":
                               urgencyColor = hintColor;
@@ -395,27 +513,57 @@ class _TabSavedState extends State<TabSaved> with SingleTickerProviderStateMixin
   }
 
   Widget _buildIncidentHistoryTab() {
-    return incidentHistory.isEmpty
-        ? Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                getSvgImage("setting.svg", height: 80.h, width: 80.h),
-                getVerSpace(20.h),
-                getCustomFont("No incidents reported", 18.sp, Colors.black, 1,
-                    fontWeight: FontWeight.w600),
-                getVerSpace(8.h),
-                getCustomFont("Your incident reports will appear here", 14.sp, hintColor, 1,
-                    fontWeight: FontWeight.w400, textAlign: TextAlign.center),
-              ],
-            ),
-          )
-        : ListView.builder(
-            padding: EdgeInsets.symmetric(horizontal: 20.h),
-            itemCount: incidentHistory.length,
-            itemBuilder: (context, index) {
-              IncidentModel incident = incidentHistory[index];
-              return Container(
+    return Obx(() {
+      if (_incidentService.isLoading.value) {
+        return Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CircularProgressIndicator(color: pacificBlue),
+              getVerSpace(20.h),
+              getCustomFont("Loading incidents...", 16.sp, hintColor, 1,
+                  fontWeight: FontWeight.w500),
+            ],
+          ),
+        );
+      }
+
+      final incidents = _incidentService.incidents;
+
+      return incidents.isEmpty
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  getSvgImage("setting.svg", height: 80.h, width: 80.h),
+                  getVerSpace(20.h),
+                  getCustomFont("No incidents reported", 18.sp, Colors.black, 1,
+                      fontWeight: FontWeight.w600),
+                  getVerSpace(8.h),
+                  getCustomFont("Your incident reports will appear here", 14.sp, hintColor, 1,
+                      fontWeight: FontWeight.w400, textAlign: TextAlign.center),
+                  getVerSpace(20.h),
+                  ElevatedButton(
+                    onPressed: () => _incidentService.refreshIncidents(),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: pacificBlue,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12.h),
+                      ),
+                    ),
+                    child: Text('Refresh', style: TextStyle(color: Colors.white)),
+                  ),
+                ],
+              ),
+            )
+          : RefreshIndicator(
+              onRefresh: () => _incidentService.refreshIncidents(),
+              child: ListView.builder(
+                padding: EdgeInsets.symmetric(horizontal: 20.h),
+                itemCount: incidents.length,
+                itemBuilder: (context, index) {
+                  IncidentModel incident = incidents[index];
+                  return Container(
                 margin: EdgeInsets.only(bottom: 16.h),
                 padding: EdgeInsets.all(16.h),
                 decoration: BoxDecoration(
@@ -438,10 +586,10 @@ class _TabSavedState extends State<TabSaved> with SingleTickerProviderStateMixin
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              getCustomFont(incident.id, 16.sp, Colors.black, 1,
+                              getCustomFont(incident.incidentNumber, 16.sp, Colors.black, 1,
                                   fontWeight: FontWeight.w600),
                               getVerSpace(4.h),
-                              getCustomFont(incident.issueType, 14.sp, hintColor, 1,
+                              getCustomFont(incident.subject, 14.sp, hintColor, 1,
                                   fontWeight: FontWeight.w400),
                             ],
                           ),
@@ -449,7 +597,7 @@ class _TabSavedState extends State<TabSaved> with SingleTickerProviderStateMixin
                         Container(
                           padding: EdgeInsets.symmetric(horizontal: 12.h, vertical: 6.h),
                           decoration: BoxDecoration(
-                            color: _getStatusColor(incident.status).withOpacity(0.1),
+                            color: _getStatusColor(incident.status).withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(8.h),
                           ),
                           child: getCustomFont(incident.status, 12.sp, 
@@ -496,7 +644,7 @@ class _TabSavedState extends State<TabSaved> with SingleTickerProviderStateMixin
                     getVerSpace(4.h),
                     getCustomFont(incident.description, 14.sp, Colors.black, 1,
                         fontWeight: FontWeight.w400),
-                    if (incident.responseMessage.isNotEmpty) ...[
+                    if (incident.responseMessage != null && incident.responseMessage!.isNotEmpty) ...[
                       getVerSpace(12.h),
                       Container(
                         width: double.infinity,
@@ -511,7 +659,7 @@ class _TabSavedState extends State<TabSaved> with SingleTickerProviderStateMixin
                             getCustomFont("Response:", 12.sp, hintColor, 1,
                                 fontWeight: FontWeight.w400),
                             getVerSpace(4.h),
-                            getCustomFont(incident.responseMessage, 14.sp, Colors.black, 1,
+                            getCustomFont(incident.responseMessage!, 14.sp, Colors.black, 1,
                                 fontWeight: FontWeight.w400),
                           ],
                         ),
@@ -521,124 +669,39 @@ class _TabSavedState extends State<TabSaved> with SingleTickerProviderStateMixin
                 ),
               );
             },
-          );
+          ),
+        );
+    });
   }
 
   Color _getStatusColor(String status) {
-    switch (status) {
-      case "Resolved":
-        return pacificBlue;  // Green for resolved
-      case "In Progress":
-        return accentRed.withOpacity(0.6);  // Subtle red for in progress
-      case "Pending":
-        return hintColor;  // Neutral for pending
+    switch (status.toLowerCase()) {
+      case "resolved":
+        return pacificBlue;
+      case "in_progress":
+      case "assigned":
+        return accentRed.withValues(alpha: 0.6);
+      case "open":
+      case "new":
+      case "pending":
+        return hintColor;
       default:
         return hintColor;
     }
   }
 
   Color _getUrgencyColor(String urgency) {
-    switch (urgency) {
-      case "Critical":
-        return accentRed;  // Red for critical issues
-      case "High":
-        return accentRed.withOpacity(0.7);  // Lighter red for high
-      case "Medium":
-        return hintColor;  // Neutral for medium
-      case "Low":
-        return pacificBlue;  // Green for low priority
+    switch (urgency.toLowerCase()) {
+      case "critical":
+        return accentRed;
+      case "high":
+        return accentRed.withValues(alpha: 0.7);
+      case "medium":
+        return hintColor;
+      case "low":
+        return pacificBlue;
       default:
         return hintColor;
     }
-  }
-
-  void _submitIncident() {
-    // Generate incident ID
-    String incidentId = "INC${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}";
-    
-    // Add new incident to history (in a real app, this would be sent to server)
-    IncidentModel newIncident = IncidentModel(
-      incidentId,
-      _nameController.text,
-      _phoneController.text,
-      _meterNumberController.text,
-      _selectedIssueType,
-      _selectedUrgency,
-      _descriptionController.text,
-      DateTime.now(),
-      "Pending",
-      "",
-    );
-    
-    setState(() {
-      incidentHistory.insert(0, newIncident);
-    });
-    
-    // Show success dialog
-    Get.dialog(
-      AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16.h),
-        ),
-        title: Row(
-          children: [
-            Icon(Icons.check_circle, color: Colors.green, size: 28.h),
-            getHorSpace(12.h),
-            getCustomFont("Incident Submitted", 18.sp, Colors.black, 1,
-                fontWeight: FontWeight.w600),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            getCustomFont("Your incident has been successfully submitted.", 16.sp, Colors.black, 1,
-                fontWeight: FontWeight.w400),
-            getVerSpace(12.h),
-            Container(
-              padding: EdgeInsets.all(12.h),
-              decoration: BoxDecoration(
-                color: Colors.grey.shade100,
-                borderRadius: BorderRadius.circular(8.h),
-              ),
-              child: Row(
-                children: [
-                  getCustomFont("Incident ID: ", 14.sp, hintColor, 1,
-                      fontWeight: FontWeight.w400),
-                  getCustomFont(incidentId, 14.sp, Colors.black, 1,
-                      fontWeight: FontWeight.w600),
-                ],
-              ),
-            ),
-            getVerSpace(12.h),
-            getCustomFont("Our support team will contact you within 24 hours.", 14.sp, hintColor, 1,
-                fontWeight: FontWeight.w400),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Get.back();
-              _clearForm();
-              // Switch to history tab to show the new incident
-              _tabController.animateTo(1);
-            },
-            child: getCustomFont("OK", 16.sp, pacificBlue, 1,
-                fontWeight: FontWeight.w600),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _clearForm() {
-    _nameController.clear();
-    _phoneController.clear();
-    _meterNumberController.clear();
-    _descriptionController.clear();
-    setState(() {
-      _selectedIssueType = "Token not received";
-      _selectedUrgency = "Medium";
-    });
   }
 }

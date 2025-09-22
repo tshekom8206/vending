@@ -7,7 +7,6 @@ import 'package:khanyi_vending_app/routes/app_routes.dart';
 import 'package:khanyi_vending_app/util/color_category.dart';
 import 'package:khanyi_vending_app/util/constant.dart';
 import 'package:khanyi_vending_app/util/constant_widget.dart';
-import 'package:khanyi_vending_app/util/pref_data.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({Key? key}) : super(key: key);

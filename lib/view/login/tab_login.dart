@@ -4,8 +4,8 @@ import 'package:get/get.dart';
 import 'package:khanyi_vending_app/routes/app_routes.dart';
 import 'package:khanyi_vending_app/util/color_category.dart';
 import 'package:khanyi_vending_app/util/constant.dart';
-import 'package:khanyi_vending_app/util/pref_data.dart';
-import 'package:khanyi_vending_app/view/home/home_screen.dart';
+import 'package:khanyi_vending_app/controller/controller.dart';
+import 'package:khanyi_vending_app/services/auth_service.dart';
 
 import '../../util/constant_widget.dart';
 
@@ -20,14 +20,13 @@ class TabLogin extends StatefulWidget {
 }
 
 class _TabLoginState extends State<TabLogin> {
-  TextEditingController emailController = TextEditingController();
-  TextEditingController passwordController = TextEditingController();
-  final loginForm = GlobalKey<FormState>();
+  final LoginController loginController = Get.put(LoginController());
+  final AuthService authService = Get.find<AuthService>();
 
   @override
   Widget build(BuildContext context) {
     return Form(
-      key: loginForm,
+      key: loginController.loginForm,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -79,11 +78,8 @@ class _TabLoginState extends State<TabLogin> {
   }
 
   Widget buildLoginButton(BuildContext context) {
-    return getButton(context, pacificBlue, "Login", Colors.white, () {
-      if (loginForm.currentState!.validate()) {
-        PrefData.setIsSignIn(true);
-        Get.offAll(HomeScreen());
-      }
+    return getButton(context, pacificBlue, "Login", Colors.white, () async {
+      await loginController.login();
     }, 18.sp,
         weight: FontWeight.w700,
         buttonHeight: 60.h,
@@ -110,7 +106,7 @@ class _TabLoginState extends State<TabLogin> {
         getCustomFont("Email Address", 16.sp, Colors.black, 1,
             fontWeight: FontWeight.w600, txtHeight: 1.5),
         getVerSpace(6.h),
-        defaultTextField(context, emailController, "Email Address",
+        defaultTextField(context, loginController.emailController, "Email Address",
             validator: (email) {
           if (email == null || email.isEmpty) {
             return 'Please enter email address';
@@ -126,7 +122,7 @@ class _TabLoginState extends State<TabLogin> {
         getCustomFont("Password", 16.sp, Colors.black, 1,
             fontWeight: FontWeight.w600, txtHeight: 1.5),
         getVerSpace(6.h),
-        defaultTextField(context, passwordController, "Your Password",
+        defaultTextField(context, loginController.passwordController, "Your Password",
             validator: (password) {
           if (password == null || password.isEmpty) {
             return 'Please enter valid password';

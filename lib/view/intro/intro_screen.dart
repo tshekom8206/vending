@@ -72,19 +72,7 @@ class _IntroScreenState extends State<IntroScreen> {
                     controller: pageController,
                     itemBuilder: (context, index) {
                       ModelIntro modelIntro = introLists[index];
-                      return index == introLists.length - 1
-                          ? Align(
-                              alignment: Alignment.bottomLeft,
-                              child: getMultilineCustomFont(
-                                modelIntro.title,
-                                34.sp,
-                                Colors.black,
-                                fontWeight: FontWeight.w700,
-                                txtHeight: 1.5,
-                              ).marginOnly(
-                                  left: 20.h, right: 112.w, bottom: 140.h),
-                            )
-                          : getMultilineCustomFont(
+                      return getMultilineCustomFont(
                               modelIntro.title,
                               34.sp,
                               Colors.black,

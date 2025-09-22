@@ -4,9 +4,8 @@ import 'package:get/get.dart';
 import 'package:khanyi_vending_app/controller/controller.dart';
 import 'package:khanyi_vending_app/util/color_category.dart';
 import 'package:khanyi_vending_app/util/pref_data.dart';
+import 'package:khanyi_vending_app/services/auth_service.dart';
 import 'package:khanyi_vending_app/view/home/tab/tab_more_screens/help_center_screen.dart';
-import 'package:khanyi_vending_app/view/home/tab/tab_more_screens/language_screen.dart';
-import 'package:khanyi_vending_app/view/home/tab/tab_more_screens/booking_tab/my_bookings_screen.dart';
 import 'package:khanyi_vending_app/view/home/tab/tab_more_screens/purchase_history/purchase_history_screen.dart';
 import 'package:khanyi_vending_app/view/home/tab/tab_more_screens/my_profiles/my_profile_screen.dart';
 import 'package:khanyi_vending_app/view/home/tab/tab_more_screens/notification_screen.dart';
@@ -25,6 +24,7 @@ class TabMore extends StatefulWidget {
 class _TabMoreState extends State<TabMore> {
   TabMoreScreenController tabMoreScreenController =
       Get.put(TabMoreScreenController());
+  final AuthService _authService = Get.find<AuthService>();
 
   @override
   Widget build(BuildContext context) {
@@ -52,17 +52,21 @@ class _TabMoreState extends State<TabMore> {
                       getAssetImage("user_image.png",
                           height: 80.h, width: 80.h),
                       getHorSpace(20.w),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          getCustomFont("Demo User", 18.sp, regularWhite, 1,
-                              fontWeight: FontWeight.w600, txtHeight: 1.5.h),
-                          getVerSpace(6.h),
-                          getCustomFont(
-                              "demo@khanyisolutions.co.za", 14.sp, regularWhite, 1,
-                              fontWeight: FontWeight.w400)
-                        ],
-                      )
+                      Obx(() {
+                        final user = _authService.currentUser.value;
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            getCustomFont(
+                                user?.fullName ?? "Demo User", 18.sp, regularWhite, 1,
+                                fontWeight: FontWeight.w600, txtHeight: 1.5.h),
+                            getVerSpace(6.h),
+                            getCustomFont(
+                                user?.email ?? "demo@khanyisolutions.co.za", 14.sp, regularWhite, 1,
+                                fontWeight: FontWeight.w400)
+                          ],
+                        );
+                      })
                     ],
                   )
                 ],
@@ -75,7 +79,7 @@ class _TabMoreState extends State<TabMore> {
                   borderRadius: BorderRadius.circular(16.h),
                   boxShadow: [
                     BoxShadow(
-                        color: selectTabColor.withOpacity(0.14),
+                        color: selectTabColor.withValues(alpha: 0.14),
                         offset: const Offset(-4, 5),
                         blurRadius: 11),
                   ],

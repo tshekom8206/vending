@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-import 'package:khanyi_vending_app/routes/app_routes.dart';
-import 'package:khanyi_vending_app/util/constant.dart';
+import 'package:khanyi_vending_app/controller/controller.dart';
+import 'package:khanyi_vending_app/services/auth_service.dart';
 
 import '../../util/color_category.dart';
 import '../../util/constant_widget.dart';
@@ -20,26 +20,34 @@ class TabSignUp extends StatefulWidget {
 }
 
 class _TabSignUpState extends State<TabSignUp> {
-  TextEditingController nameController = TextEditingController();
-  TextEditingController emailController = TextEditingController();
-  TextEditingController phoneController = TextEditingController();
-  TextEditingController passwordController = TextEditingController();
-  final singnUpkey = GlobalKey<FormState>();
+  final SignUpController signUpController = Get.put(SignUpController());
+  final AuthService authService = Get.find<AuthService>();
 
   @override
   Widget build(BuildContext context) {
     return Form(
-      key: singnUpkey,
+      key: signUpController.signUpForm,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          getCustomFont("Name", 16.sp, Colors.black, 1,
+          getCustomFont("First Name", 16.sp, Colors.black, 1,
               fontWeight: FontWeight.w600, txtHeight: 1.5),
           getVerSpace(6.h),
-          defaultTextField(context, nameController, "Enter Your Name",
+          defaultTextField(context, signUpController.firstNameController, "Enter Your First Name",
               validator: (name) {
             if (name == null || name.isEmpty) {
-              return 'Please enter name';
+              return 'Please enter first name';
+            }
+            return null;
+          }),
+          getVerSpace(20.h),
+          getCustomFont("Last Name", 16.sp, Colors.black, 1,
+              fontWeight: FontWeight.w600, txtHeight: 1.5),
+          getVerSpace(6.h),
+          defaultTextField(context, signUpController.lastNameController, "Enter Your Last Name",
+              validator: (name) {
+            if (name == null || name.isEmpty) {
+              return 'Please enter last name';
             }
             return null;
           }),
@@ -47,7 +55,7 @@ class _TabSignUpState extends State<TabSignUp> {
           getCustomFont("Email Address", 16.sp, Colors.black, 1,
               fontWeight: FontWeight.w600, txtHeight: 1.5),
           getVerSpace(6.h),
-          defaultTextField(context, emailController, "Email Address",
+          defaultTextField(context, signUpController.emailController, "Email Address",
               validator: (email) {
             if (email == null || email.isEmpty) {
               return 'Please enter email address';
@@ -64,7 +72,7 @@ class _TabSignUpState extends State<TabSignUp> {
               fontWeight: FontWeight.w600, txtHeight: 1.5),
           getVerSpace(6.h),
           getCountryTextField(
-              context, phoneController, "Enter Your Phone Number",
+              context, signUpController.phoneController, "Enter Your Phone Number",
               validator: (phoneNumber) {
             if (phoneNumber == null ||
                 phoneNumber.isEmpty ||
@@ -77,19 +85,41 @@ class _TabSignUpState extends State<TabSignUp> {
               keyboardType: TextInputType.number,
               inputFormatters: [FilteringTextInputFormatter.digitsOnly]),
           getVerSpace(20.h),
+          getCustomFont("ID Number", 16.sp, Colors.black, 1,
+              fontWeight: FontWeight.w600, txtHeight: 1.5),
           getVerSpace(6.h),
-          defaultTextField(context, passwordController, "Your Password",
+          defaultTextField(context, signUpController.idNumberController, "Enter Your ID Number",
+              validator: (idNumber) {
+            if (idNumber == null || idNumber.isEmpty) {
+              return 'Please enter ID number';
+            }
+            return null;
+          }),
+          getVerSpace(20.h),
+          getCustomFont("Password", 16.sp, Colors.black, 1,
+              fontWeight: FontWeight.w600, txtHeight: 1.5),
+          getVerSpace(6.h),
+          defaultTextField(context, signUpController.passwordController, "Your Password",
               validator: (password) {
             if (password == null || password.isEmpty) {
               return 'Please enter password';
             }
             return null;
           }, suffix: true, suffixImage: "eye.svg"),
-          getVerSpace(50.h),
-          getButton(context, pacificBlue, "Sign Up", Colors.white, () {
-            if (singnUpkey.currentState!.validate()) {
-              Constant.sendToNext(context, Routes.verificationRoute);
+          getVerSpace(20.h),
+          getCustomFont("Confirm Password", 16.sp, Colors.black, 1,
+              fontWeight: FontWeight.w600, txtHeight: 1.5),
+          getVerSpace(6.h),
+          defaultTextField(context, signUpController.confirmPasswordController, "Confirm Your Password",
+              validator: (confirmPassword) {
+            if (confirmPassword == null || confirmPassword.isEmpty) {
+              return 'Please confirm password';
             }
+            return null;
+          }, suffix: true, suffixImage: "eye.svg"),
+          getVerSpace(50.h),
+          getButton(context, pacificBlue, "Sign Up", Colors.white, () async {
+            await signUpController.signUp();
           }, 18.sp,
               weight: FontWeight.w700,
               buttonHeight: 60.h,

@@ -2,13 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-import 'package:khanyi_vending_app/controller/controller.dart';
-import 'package:khanyi_vending_app/datafile/datafile.dart';
-import 'package:khanyi_vending_app/model/electricity_purchase_model.dart';
+import 'package:khanyi_vending_app/model/api_models.dart';
+import 'package:khanyi_vending_app/services/purchase_service.dart';
 import 'package:khanyi_vending_app/util/color_category.dart';
 import 'package:khanyi_vending_app/util/constant.dart';
 import 'package:khanyi_vending_app/util/constant_widget.dart';
-import 'package:khanyi_vending_app/util/token_generator.dart';
 
 class PurchaseHistoryScreen extends StatefulWidget {
   const PurchaseHistoryScreen({Key? key}) : super(key: key);
@@ -18,13 +16,23 @@ class PurchaseHistoryScreen extends StatefulWidget {
 }
 
 class _PurchaseHistoryScreenState extends State<PurchaseHistoryScreen> {
-  List<ElectricityPurchaseModel> purchases = DataFile.getElectricityPurchases();
+  final PurchaseService _purchaseService = Get.find<PurchaseService>();
 
   void backClick() {
     Constant.backToFinish();
   }
 
-  void showTokenDetails(ElectricityPurchaseModel purchase) {
+  @override
+  void initState() {
+    super.initState();
+    _loadPurchases();
+  }
+
+  Future<void> _loadPurchases() async {
+    await _purchaseService.fetchPurchases();
+  }
+
+  void showTokenDetails(Purchase purchase) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -34,13 +42,12 @@ class _PurchaseHistoryScreenState extends State<PurchaseHistoryScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildDetailRow("Complex:", purchase.complexName),
-            _buildDetailRow("Unit:", purchase.unitNumber),
-            _buildDetailRow("Meter:", purchase.meterNumber),
-            _buildDetailRow("Amount:", TokenGenerator.formatCurrency(purchase.amountZar)),
-            _buildDetailRow("Units:", TokenGenerator.formatBalance(purchase.kwhPurchased)),
-            _buildDetailRow("Date:", _formatDate(purchase.purchaseDate)),
-            _buildDetailRow("Reference:", purchase.transactionReference),
+            _buildDetailRow("Unit ID:", purchase.unitId ?? 'N/A'),
+            _buildDetailRow("Meter ID:", purchase.meterId ?? 'N/A'),
+            _buildDetailRow("Amount:", 'R${purchase.amount.final_.toStringAsFixed(2)}'),
+            _buildDetailRow("Units:", '${purchase.electricity.units.toStringAsFixed(2)} kWh'),
+            _buildDetailRow("Date:", _formatDate(purchase.createdAt)),
+            _buildDetailRow("Reference:", purchase.transactionId ?? purchase.id.substring(0, 8)),
             getVerSpace(15.h),
             getCustomFont("Electricity Token:", 14.sp, Colors.black, 1,
                 fontWeight: FontWeight.w600),
@@ -55,12 +62,12 @@ class _PurchaseHistoryScreenState extends State<PurchaseHistoryScreen> {
               child: Row(
                 children: [
                   Expanded(
-                    child: getCustomFont(purchase.token, 14.sp, pacificBlue, 2,
+                    child: getCustomFont(purchase.electricity.token ?? 'Token not available', 14.sp, pacificBlue, 2,
                         fontWeight: FontWeight.w700),
                   ),
                   GestureDetector(
                     onTap: () {
-                      Clipboard.setData(ClipboardData(text: purchase.token));
+                      Clipboard.setData(ClipboardData(text: purchase.electricity.token ?? ''));
                       Get.snackbar("Copied", "Token copied to clipboard");
                     },
                     child: Icon(Icons.copy, color: pacificBlue, size: 20.h),
@@ -107,7 +114,7 @@ class _PurchaseHistoryScreenState extends State<PurchaseHistoryScreen> {
 
   String _getTimeAgo(DateTime date) {
     Duration difference = DateTime.now().difference(date);
-    
+
     if (difference.inDays > 0) {
       return "${difference.inDays} ${difference.inDays == 1 ? 'day' : 'days'} ago";
     } else if (difference.inHours > 0) {
@@ -117,6 +124,26 @@ class _PurchaseHistoryScreenState extends State<PurchaseHistoryScreen> {
     } else {
       return "Just now";
     }
+  }
+
+  String _getDisplayLocation(Purchase purchase) {
+    List<String> parts = [];
+
+    if (purchase.estateName != null && purchase.estateName!.isNotEmpty) {
+      parts.add(purchase.estateName!);
+    }
+
+    if (purchase.unitNumber != null && purchase.unitNumber!.isNotEmpty) {
+      parts.add("Unit ${purchase.unitNumber}");
+    } else if (purchase.unitId != null && purchase.unitId!.isNotEmpty) {
+      parts.add("Unit ID: ${purchase.unitId}");
+    }
+
+    if (purchase.estateCity != null && purchase.estateCity!.isNotEmpty) {
+      parts.add(purchase.estateCity!);
+    }
+
+    return parts.isNotEmpty ? parts.join(" • ") : "No Location";
   }
 
   @override
@@ -136,30 +163,37 @@ class _PurchaseHistoryScreenState extends State<PurchaseHistoryScreen> {
                   .paddingSymmetric(horizontal: 20.w),
               getVerSpace(20.h),
               
-              if (purchases.isEmpty)
-                Expanded(
-                  child: Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.receipt_long, size: 80.h, color: hintColor),
-                        getVerSpace(20.h),
-                        getCustomFont("No purchases yet", 18.sp, hintColor, 1,
-                            fontWeight: FontWeight.w500),
-                        getVerSpace(10.h),
-                        getCustomFont("Your electricity purchase history will appear here", 
-                            14.sp, hintColor, 2, fontWeight: FontWeight.w400),
-                      ],
+              Obx(() {
+                if (_purchaseService.isLoading.value)
+                  return Expanded(
+                    child: Center(
+                      child: CircularProgressIndicator(color: pacificBlue),
                     ),
-                  ),
-                )
-              else
-                Expanded(
-                  child: ListView.builder(
-                    padding: EdgeInsets.symmetric(horizontal: 20.w),
-                    itemCount: purchases.length,
-                    itemBuilder: (context, index) {
-                      ElectricityPurchaseModel purchase = purchases[index];
+                  );
+                else if (_purchaseService.purchases.isEmpty)
+                  return Expanded(
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.receipt_long, size: 80.h, color: hintColor),
+                          getVerSpace(20.h),
+                          getCustomFont("No purchases yet", 18.sp, hintColor, 1,
+                              fontWeight: FontWeight.w500),
+                          getVerSpace(10.h),
+                          getCustomFont("Your electricity purchase history will appear here",
+                              14.sp, hintColor, 2, fontWeight: FontWeight.w400),
+                        ],
+                      ),
+                    ),
+                  );
+                else
+                  return Expanded(
+                    child: ListView.builder(
+                      padding: EdgeInsets.symmetric(horizontal: 20.w),
+                      itemCount: _purchaseService.purchases.length,
+                      itemBuilder: (context, index) {
+                        Purchase purchase = _purchaseService.purchases[index];
                       
                       return GestureDetector(
                         onTap: () => showTokenDetails(purchase),
@@ -197,10 +231,10 @@ class _PurchaseHistoryScreenState extends State<PurchaseHistoryScreen> {
                                     child: Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        getCustomFont(purchase.complexName, 16.sp, Colors.black, 1,
+                                        getCustomFont('Electricity Purchase', 16.sp, Colors.black, 1,
                                             fontWeight: FontWeight.w600),
                                         getVerSpace(4.h),
-                                        getCustomFont("Unit ${purchase.unitNumber}", 
+                                        getCustomFont(_getDisplayLocation(purchase),
                                             14.sp, hintColor, 1),
                                       ],
                                     ),
@@ -208,10 +242,10 @@ class _PurchaseHistoryScreenState extends State<PurchaseHistoryScreen> {
                                   Column(
                                     crossAxisAlignment: CrossAxisAlignment.end,
                                     children: [
-                                      getCustomFont(TokenGenerator.formatCurrency(purchase.amountZar), 
+                                      getCustomFont('R${purchase.amount.final_.toStringAsFixed(2)}',
                                           16.sp, Colors.black, 1, fontWeight: FontWeight.w600),
                                       getVerSpace(4.h),
-                                      getCustomFont(_getTimeAgo(purchase.purchaseDate), 
+                                      getCustomFont(_getTimeAgo(purchase.createdAt),
                                           12.sp, hintColor, 1),
                                     ],
                                   ),
@@ -233,7 +267,7 @@ class _PurchaseHistoryScreenState extends State<PurchaseHistoryScreen> {
                                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                         children: [
                                           getCustomFont("Units Purchased:", 12.sp, Colors.black, 1),
-                                          getCustomFont(TokenGenerator.formatBalance(purchase.kwhPurchased), 
+                                          getCustomFont('${purchase.electricity.units.toStringAsFixed(2)} kWh',
                                               12.sp, pacificBlue, 1, fontWeight: FontWeight.w600),
                                         ],
                                       ),
@@ -243,13 +277,13 @@ class _PurchaseHistoryScreenState extends State<PurchaseHistoryScreen> {
                                   Container(
                                     padding: EdgeInsets.symmetric(vertical: 8.h, horizontal: 12.w),
                                     decoration: BoxDecoration(
-                                      color: purchase.status == "Completed" 
+                                      color: purchase.status == "completed"
                                           ? Colors.green.withOpacity(0.1)
                                           : Colors.orange.withOpacity(0.1),
                                       borderRadius: BorderRadius.circular(8.h),
                                     ),
-                                    child: getCustomFont(purchase.status, 12.sp, 
-                                        purchase.status == "Completed" ? Colors.green : Colors.orange, 1,
+                                    child: getCustomFont(purchase.status.toUpperCase(), 12.sp,
+                                        purchase.status == "completed" ? Colors.green : Colors.orange, 1,
                                         fontWeight: FontWeight.w600),
                                   ),
                                 ],
@@ -261,7 +295,7 @@ class _PurchaseHistoryScreenState extends State<PurchaseHistoryScreen> {
                                 children: [
                                   Icon(Icons.receipt, size: 16.h, color: hintColor),
                                   getHorSpace(6.w),
-                                  getCustomFont("Ref: ${purchase.transactionReference}", 
+                                  getCustomFont("Ref: ${purchase.transactionId ?? purchase.id.substring(0, 8)}",
                                       12.sp, hintColor, 1),
                                   Spacer(),
                                   getCustomFont("Tap for token", 12.sp, pacificBlue, 1,
@@ -273,10 +307,11 @@ class _PurchaseHistoryScreenState extends State<PurchaseHistoryScreen> {
                             ],
                           ),
                         ),
-                      );
-                    },
-                  ),
-                ),
+                        );
+                      },
+                    ),
+                  );
+              }),
             ],
           ),
         ),

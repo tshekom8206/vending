@@ -6,16 +6,17 @@ import 'package:khanyi_vending_app/datafile/datafile.dart';
 import 'package:khanyi_vending_app/util/color_category.dart';
 import 'package:khanyi_vending_app/util/constant.dart';
 import 'package:khanyi_vending_app/util/constant_widget.dart';
-import 'package:khanyi_vending_app/view/home/tab/tab_home_screens/detail_screen.dart';
 import 'package:khanyi_vending_app/view/home/tab/tab_home_screens/recomended_screen.dart';
 import 'package:khanyi_vending_app/view/home/tab/tab_home_screens/search_screen.dart';
-import 'package:khanyi_vending_app/view/home/tab/tab_home_screens/complex_selection_screen.dart';
+import 'package:khanyi_vending_app/view/home/tab/tab_home_screens/electricity_purchase_screen.dart';
+import 'package:khanyi_vending_app/services/estate_service.dart';
+import 'package:khanyi_vending_app/services/notification_service.dart';
 
 import '../../../../model/category_model.dart';
 import '../../../../model/recomended_model.dart';
 import '../../../../model/complex_model.dart';
 import '../../../../model/notification_model.dart';
-import 'electricity_purchase_screen.dart';
+import '../../../../model/api_models.dart';
 
 class TabHome extends StatefulWidget {
   const TabHome({Key? key}) : super(key: key);
@@ -28,15 +29,29 @@ class _TabHomeState extends State<TabHome> {
   TextEditingController searchController = TextEditingController();
   List<ModelCategory> categoryLists = DataFile.categoryList;
   HomeController controller = Get.put(HomeController());
+  HomeApiController apiController = Get.put(HomeApiController());
+  EstateService estateService = Get.put(EstateService());
+  NotificationService notificationService = Get.put(NotificationService());
   List<ModelRecomended> recomendedLists = DataFile.recomendedList;
   List<ComplexModel> complexLists = DataFile.complexList;
-  List<NotificationModel> notificationList = DataFile.notificationList;
+
+  @override
+  void initState() {
+    super.initState();
+    // Load estates and notifications after the frame is built to avoid setState during build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      estateService.fetchEstates();
+      notificationService.fetchNotifications();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    return GetBuilder<HomeController>(
-      init: HomeController(),
-      builder: (homecontroller) =>Column(
+    return GetBuilder<HomeApiController>(
+      init: HomeApiController(),
+      builder: (homeApiController) => GetBuilder<HomeController>(
+        init: HomeController(),
+        builder: (homeController) => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           getVerSpace(20.h),
@@ -69,7 +84,8 @@ class _TabHomeState extends State<TabHome> {
                         padding: EdgeInsets.all(11.h),
                         child: getSvgImage("notification_bing.svg"),
                       ),
-                      if (_getUnreadNotificationCount() > 0)
+                      Obx(() => notificationService.unreadCount.value > 0 ?
+
                         Positioned(
                           right: -2.w,
                           top: -2.h,
@@ -83,7 +99,7 @@ class _TabHomeState extends State<TabHome> {
                             ),
                             child: Center(
                               child: Text(
-                                _getUnreadNotificationCount().toString(),
+                                notificationService.unreadCount.value.toString(),
                                 style: TextStyle(
                                   color: Colors.white,
                                   fontSize: 9.sp,
@@ -93,8 +109,8 @@ class _TabHomeState extends State<TabHome> {
                               ),
                             ),
                           ),
-                        ),
-                    ],
+                        ) : Container(),
+                    )],
                   ),
                 ),
               )
@@ -140,7 +156,12 @@ class _TabHomeState extends State<TabHome> {
                                 .paddingOnly(right: 180.w),
                             getVerSpace(16.h),
                             GestureDetector(
-                              onTap: () => Get.to(() => ComplexSelectionScreen()),
+                              onTap: () => Get.to(() => ElectricityPurchaseScreen(
+                                complexName: 'Loading...', // Will be auto-filled from user data
+                                tariffRate: 'R0.00/kWh', // Will be auto-filled from user data
+                                meterNumber: 'Loading...', // Will be auto-filled from user data
+                                unitNumber: 'Loading...', // Will be auto-filled from user data
+                              )),
                               child: Container(
                                 padding: EdgeInsets.symmetric(
                                     horizontal: 14.h, vertical: 8.h),
@@ -240,166 +261,197 @@ class _TabHomeState extends State<TabHome> {
                   ).marginSymmetric(horizontal: 20.h),
                   SizedBox(
                     height: 340.h,
-                    child: ListView.builder(
-                      itemCount: recomendedLists.length,
-                      primary: false,
-                      shrinkWrap: true,
-                      scrollDirection: Axis.horizontal,
-                      itemBuilder: (context, index) {
-                        ModelRecomended modelRecomended = recomendedLists[index];
-                        return GestureDetector(
-                          onTap: (){
-                            Get.to(() => ComplexSelectionScreen());
-                          },
-                          child: Container(
-                            margin: EdgeInsets.only(
-                                left: index == 0 ? 20.h : 0,
-                                right: 20.h,
-                                bottom: 40.h,
-                                top: 20.h),
-                            width: 332.h,
-                            decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(16.h),
-                                boxShadow: [
-                                  BoxShadow(
-                                      color: shadowColor,
-                                      offset: Offset(-9, 12),
-                                      blurRadius: 34)
-                                ]),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Container(
-                                    height: 130.h,
-                                    decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.vertical(
-                                            top: Radius.circular(16.h)),
-                                        image: DecorationImage(
-                                            image: AssetImage(
-                                                Constant.assetImagePath +
-                                                    modelRecomended.image),
-                                            fit: BoxFit.fill)),
-                                    alignment: Alignment.topRight,
-                                    child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.end,
-                                      children: [
-                                        GestureDetector(
-                                          onTap: () {
-                                            controller.onSavePosition(
-                                                recomendedLists[index]);
-                                          },
-                                          child: Container(
-                                            height: 36.h,
-                                            width: 36.h,
-                                            decoration: BoxDecoration(
-                                                shape: BoxShape.circle,
-                                                color:
-                                                    regularBlack.withOpacity(0.50)),
-                                            child: recomendedLists[index].favourite
-                                                ? getSvgImage("savefill.svg",
-                                                        height: 20.h, width: 20.w)
-                                                    .marginAll(8.h)
-                                                : getSvgImage("savewithoutfill.svg",
-                                                        height: 20.h, width: 20.w)
-                                                    .marginAll(8.h),
-                                          ),
-                                        )
-                                      ],
-                                    ).paddingOnly(top: 12.h, right: 12.w)),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    getVerSpace(13.h),
-                                    getCustomFont(modelRecomended.name, 16.sp,
-                                        Colors.black, 1,
-                                        fontWeight: FontWeight.w600,
-                                        txtHeight: 1.5),
-                                    getVerSpace(12.h),
-                                    Row(
-                                      children: [
-                                        getSvgImage("location_unselect.svg",
-                                            height: 20.h, width: 20.h, color: pacificBlue),
-                                        getHorSpace(12.h),
-                                        Flexible(
-                                          child: getCustomFont(modelRecomended.location,
-                                              16.sp, hintColor, 1,
-                                              fontWeight: FontWeight.w400),
-                                        ),
-                                        getHorSpace(8.h),
-                                        getAssetImage("black_dot.png",
-                                            height: 6.h, width: 6.w),
-                                        getHorSpace(8.h),
-                                        Flexible(
-                                          child: getCustomFont(modelRecomended.type, 16.sp,
-                                              hintColor, 1,
-                                              fontWeight: FontWeight.w400),
-                                        ),
-                                      ],
-                                    ),
-                                    getVerSpace(16.h),
-                                    Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Row(
-                                          children: [
-                                            getCustomFont(
-                                                "${modelRecomended.price}",
-                                                14.sp,
-                                                pacificBlue,
-                                                1,
-                                                fontWeight: FontWeight.w600),
-                                            getHorSpace(2.w),
-                                            getCustomFont(
-                                                "/kWh", 14.sp, hintColor, 1,
-                                                fontWeight: FontWeight.w400),
-                                          ],
-                                        ),
-                                        Flexible(
-                                          child: Row(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              getSvgImage("maximize.svg",
-                                                  height: 20.h, width: 20.w, color: pacificBlue),
-                                              getHorSpace(7.w),
-                                              Flexible(
-                                                child: getCustomFont(modelRecomended.meter,
-                                                    16.sp, regularBlack, 1,
-                                                    fontWeight: FontWeight.w600),
-                                              ),
-                                              Flexible(
-                                                child: getCustomFont(" active meters",
-                                                    14.sp, regularBlack, 1,
-                                                    fontWeight: FontWeight.w400),
-                                              )
-                                            ],
-                                          ),
-                                        )
-                                      ],
-                                    )
-                                  ],
-                                ).paddingSymmetric(horizontal: 15.h),
-                                getVerSpace(15.h),
-                              ],
-                            ),
+                    child: Obx(() {
+                      if (estateService.isLoading.value) {
+                        return Center(
+                          child: CircularProgressIndicator(color: pacificBlue),
+                        );
+                      }
+
+                      if (estateService.estates.isEmpty) {
+                        return Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.home_work, size: 48.sp, color: hintColor),
+                              getVerSpace(16.h),
+                              getCustomFont("No estates available", 16.sp, hintColor, 1),
+                              getVerSpace(16.h),
+                              ElevatedButton(
+                                onPressed: () => estateService.fetchEstates(),
+                                child: Text("Retry"),
+                              ),
+                            ],
                           ),
                         );
-                      },
-                    ),
+                      }
+
+                      return ListView.builder(
+                        itemCount: estateService.estates.length,
+                        primary: false,
+                        shrinkWrap: true,
+                        scrollDirection: Axis.horizontal,
+                        itemBuilder: (context, index) {
+                          Estate estate = estateService.estates[index];
+                          return GestureDetector(
+                            onTap: (){
+                              Get.to(() => ElectricityPurchaseScreen(
+                                complexName: estate.name,
+                                tariffRate: estate.formattedTariff,
+                                meterNumber: 'Loading...', // Will be auto-filled from user data
+                                unitNumber: 'Loading...', // Will be auto-filled from user data
+                              ));
+                            },
+                            child: Container(
+                              margin: EdgeInsets.only(
+                                  left: index == 0 ? 20.h : 0,
+                                  right: 20.h,
+                                  bottom: 40.h,
+                                  top: 20.h),
+                              width: 332.h,
+                              decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(16.h),
+                                  boxShadow: [
+                                    BoxShadow(
+                                        color: shadowColor,
+                                        offset: Offset(-9, 12),
+                                        blurRadius: 34)
+                                  ]),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Container(
+                                      height: 130.h,
+                                      decoration: BoxDecoration(
+                                          borderRadius: BorderRadius.vertical(
+                                              top: Radius.circular(16.h)),
+                                          image: estate.primaryImageUrl.isNotEmpty
+                                              ? DecorationImage(
+                                                  image: NetworkImage(
+                                                      'http://localhost:3000${estate.primaryImageUrl}'),
+                                                  fit: BoxFit.cover,
+                                                  onError: (exception, stackTrace) {
+                                                    print('Error loading image: $exception');
+                                                  },
+                                                )
+                                              : DecorationImage(
+                                                  image: AssetImage("${Constant.assetImagePath}recomended1.png"),
+                                                  fit: BoxFit.cover,
+                                                )),
+                                      alignment: Alignment.topRight,
+                                      child: Row(
+                                        mainAxisAlignment: MainAxisAlignment.end,
+                                        children: [
+                                          GestureDetector(
+                                            onTap: () {
+                                              // TODO: Implement save/bookmark functionality for estates
+                                            },
+                                            child: Container(
+                                              height: 36.h,
+                                              width: 36.h,
+                                              decoration: BoxDecoration(
+                                                  shape: BoxShape.circle,
+                                                  color:
+                                                      regularBlack.withOpacity(0.50)),
+                                              child: getSvgImage("savewithoutfill.svg",
+                                                      height: 20.h, width: 20.w)
+                                                  .marginAll(8.h),
+                                            ),
+                                          )
+                                        ],
+                                      ).paddingOnly(top: 12.h, right: 12.w)),
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      getVerSpace(13.h),
+                                      getCustomFont(estate.name, 16.sp,
+                                          Colors.black, 1,
+                                          fontWeight: FontWeight.w600,
+                                          txtHeight: 1.5),
+                                      getVerSpace(12.h),
+                                      Row(
+                                        children: [
+                                          getSvgImage("location_unselect.svg",
+                                              height: 20.h, width: 20.h, color: pacificBlue),
+                                          getHorSpace(12.h),
+                                          Flexible(
+                                            child: getCustomFont("${estate.address.city}, ${estate.address.province}",
+                                                16.sp, hintColor, 1,
+                                                fontWeight: FontWeight.w400),
+                                          ),
+                                          getHorSpace(8.h),
+                                          getAssetImage("black_dot.png",
+                                              height: 6.h, width: 6.w),
+                                          getHorSpace(8.h),
+                                          Flexible(
+                                            child: getCustomFont(estate.type, 16.sp,
+                                                hintColor, 1,
+                                                fontWeight: FontWeight.w400),
+                                          ),
+                                        ],
+                                      ),
+                                      getVerSpace(16.h),
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Row(
+                                            children: [
+                                              getCustomFont(
+                                                  estate.formattedTariff,
+                                                  14.sp,
+                                                  pacificBlue,
+                                                  1,
+                                                  fontWeight: FontWeight.w600),
+                                            ],
+                                          ),
+                                          Flexible(
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                getSvgImage("maximize.svg",
+                                                    height: 20.h, width: 20.w, color: pacificBlue),
+                                                getHorSpace(7.w),
+                                                Flexible(
+                                                  child: getCustomFont("${estate.totalUnits}",
+                                                      16.sp, regularBlack, 1,
+                                                      fontWeight: FontWeight.w600),
+                                                ),
+                                                Flexible(
+                                                  child: getCustomFont(" active units",
+                                                      14.sp, regularBlack, 1,
+                                                      fontWeight: FontWeight.w400),
+                                                )
+                                              ],
+                                            ),
+                                          )
+                                        ],
+                                      )
+                                    ],
+                                  ).paddingSymmetric(horizontal: 15.h),
+                                  getVerSpace(15.h),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      );
+                    }),
                   ),
                 ],
               ))
         ],
+        ),
       ),
     );
   }
 
-  int _getUnreadNotificationCount() {
-    return notificationList.where((notification) => !notification.isRead).length;
-  }
 
   void _showNotificationModal(BuildContext context) {
+    // Mark all notifications as read when modal is opened
+    notificationService.markAllAsRead();
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -433,13 +485,27 @@ class _TabHomeState extends State<TabHome> {
                   ),
                   Divider(height: 1, color: Colors.grey.withOpacity(0.3)),
                   Expanded(
-                    child: ListView.builder(
-                      controller: scrollController,
-                      itemCount: notificationList.length,
-                      itemBuilder: (context, index) {
-                        NotificationModel notification = notificationList[index];
-                        return _buildNotificationItem(notification, context);
-                      },
+                    child: Obx(() => notificationService.isLoading.value
+                      ? Center(child: CircularProgressIndicator())
+                      : notificationService.notifications.isEmpty
+                        ? Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.notifications_none, size: 64.h, color: Colors.grey),
+                                getVerSpace(16.h),
+                                getCustomFont("No notifications", 16.sp, Colors.grey, 1),
+                              ],
+                            ),
+                          )
+                        : ListView.builder(
+                            controller: scrollController,
+                            itemCount: notificationService.notifications.length,
+                            itemBuilder: (context, index) {
+                              NotificationModel notification = notificationService.notifications[index];
+                              return _buildNotificationItem(notification, context);
+                            },
+                          ),
                     ),
                   ),
                 ],

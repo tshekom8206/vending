@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-import 'package:khanyi_vending_app/util/constant.dart';
 import 'package:khanyi_vending_app/util/constant_widget.dart';
 import 'package:khanyi_vending_app/util/color_category.dart';
-import 'package:khanyi_vending_app/model/electricity_purchase_model.dart';
-import 'package:khanyi_vending_app/datafile/datafile.dart';
+import 'package:khanyi_vending_app/model/api_models.dart';
+import 'package:khanyi_vending_app/services/purchase_service.dart';
 
 class TabExplore extends StatefulWidget {
   const TabExplore({Key? key}) : super(key: key);
@@ -15,7 +14,28 @@ class TabExplore extends StatefulWidget {
 }
 
 class _TabExploreState extends State<TabExplore> {
-  List<ElectricityPurchaseModel> purchaseHistory = DataFile.purchaseHistory;
+  final PurchaseService _purchaseService = Get.find<PurchaseService>();
+  List<Purchase> purchaseHistory = [];
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPurchases();
+  }
+
+  Future<void> _loadPurchases() async {
+    setState(() {
+      isLoading = true;
+    });
+
+    await _purchaseService.fetchPurchases();
+
+    setState(() {
+      purchaseHistory = _purchaseService.purchases;
+      isLoading = false;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -54,26 +74,30 @@ class _TabExploreState extends State<TabExplore> {
                 .marginSymmetric(horizontal: 20.h),
             getVerSpace(20.h),
             Expanded(
-              child: purchaseHistory.isEmpty
+              child: isLoading
                   ? Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          getSvgImage("setting.svg", height: 80.h, width: 80.h),
-                          getVerSpace(20.h),
-                          getCustomFont("No purchases yet", 18.sp, Colors.black, 1,
-                              fontWeight: FontWeight.w600),
-                          getVerSpace(8.h),
-                          getCustomFont("Start buying electricity to see your history here", 14.sp, hintColor, 1,
-                              fontWeight: FontWeight.w400, textAlign: TextAlign.center),
-                        ],
-                      ),
+                      child: CircularProgressIndicator(color: pacificBlue),
                     )
-                  : ListView.builder(
+                  : purchaseHistory.isEmpty
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              getSvgImage("setting.svg", height: 80.h, width: 80.h),
+                              getVerSpace(20.h),
+                              getCustomFont("No purchases yet", 18.sp, Colors.black, 1,
+                                  fontWeight: FontWeight.w600),
+                              getVerSpace(8.h),
+                              getCustomFont("Start buying electricity to see your history here", 14.sp, hintColor, 1,
+                                  fontWeight: FontWeight.w400, textAlign: TextAlign.center),
+                            ],
+                          ),
+                        )
+                      : ListView.builder(
                       padding: EdgeInsets.symmetric(horizontal: 20.h),
                       itemCount: purchaseHistory.length,
                       itemBuilder: (context, index) {
-                        ElectricityPurchaseModel purchase = purchaseHistory[index];
+                        Purchase purchase = purchaseHistory[index];
                         return Container(
                           margin: EdgeInsets.only(bottom: 16.h),
                           padding: EdgeInsets.all(16.h),
@@ -97,10 +121,10 @@ class _TabExploreState extends State<TabExplore> {
                                     child: Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        getCustomFont(purchase.complexName, 16.sp, Colors.black, 1,
+                                        getCustomFont('Electricity Purchase', 16.sp, Colors.black, 1,
                                             fontWeight: FontWeight.w600),
                                         getVerSpace(4.h),
-                                        getCustomFont("Unit ${purchase.unitNumber}", 14.sp, hintColor, 1,
+                                        getCustomFont(_getDisplayLocation(purchase), 14.sp, hintColor, 1,
                                             fontWeight: FontWeight.w400),
                                       ],
                                     ),
@@ -108,11 +132,11 @@ class _TabExploreState extends State<TabExplore> {
                                   Container(
                                     padding: EdgeInsets.symmetric(horizontal: 12.h, vertical: 6.h),
                                     decoration: BoxDecoration(
-                                      color: purchase.status == "Completed" ? pacificBlue.withOpacity(0.1) : Colors.orange.withOpacity(0.1),
+                                      color: purchase.status == "completed" ? pacificBlue.withOpacity(0.1) : Colors.orange.withOpacity(0.1),
                                       borderRadius: BorderRadius.circular(8.h),
                                     ),
-                                    child: getCustomFont(purchase.status, 12.sp, 
-                                        purchase.status == "Completed" ? pacificBlue : Colors.orange, 1,
+                                    child: getCustomFont(purchase.status.toUpperCase(), 12.sp,
+                                        purchase.status == "completed" ? pacificBlue : Colors.orange, 1,
                                         fontWeight: FontWeight.w500),
                                   ),
                                 ],
@@ -129,7 +153,7 @@ class _TabExploreState extends State<TabExplore> {
                                         getCustomFont("Amount", 12.sp, hintColor, 1,
                                             fontWeight: FontWeight.w400),
                                         getVerSpace(4.h),
-                                        getCustomFont("R${purchase.amountZar.toStringAsFixed(2)}", 16.sp, Colors.black, 1,
+                                        getCustomFont("R${purchase.amount.final_.toStringAsFixed(2)}", 16.sp, Colors.black, 1,
                                             fontWeight: FontWeight.w600),
                                       ],
                                     ),
@@ -141,7 +165,7 @@ class _TabExploreState extends State<TabExplore> {
                                         getCustomFont("kWh", 12.sp, hintColor, 1,
                                             fontWeight: FontWeight.w400),
                                         getVerSpace(4.h),
-                                        getCustomFont("${purchase.kwhPurchased.toStringAsFixed(1)} kWh", 16.sp, Colors.black, 1,
+                                        getCustomFont("${purchase.electricity.units.toStringAsFixed(1)} kWh", 16.sp, Colors.black, 1,
                                             fontWeight: FontWeight.w600),
                                       ],
                                     ),
@@ -153,7 +177,7 @@ class _TabExploreState extends State<TabExplore> {
                                         getCustomFont("Date", 12.sp, hintColor, 1,
                                             fontWeight: FontWeight.w400),
                                         getVerSpace(4.h),
-                                        getCustomFont("${purchase.purchaseDate.day}/${purchase.purchaseDate.month}/${purchase.purchaseDate.year}", 14.sp, Colors.black, 1,
+                                        getCustomFont("${purchase.createdAt.day}/${purchase.createdAt.month}/${purchase.createdAt.year}", 14.sp, Colors.black, 1,
                                             fontWeight: FontWeight.w500),
                                       ],
                                     ),
@@ -177,7 +201,7 @@ class _TabExploreState extends State<TabExplore> {
                                     Row(
                                       children: [
                                         Expanded(
-                                          child: getCustomFont(purchase.token, 16.sp, Colors.black, 1,
+                                          child: getCustomFont(purchase.electricity.token ?? 'Token not available', 16.sp, Colors.black, 1,
                                               fontWeight: FontWeight.w600),
                                         ),
                                         GestureDetector(
@@ -200,9 +224,9 @@ class _TabExploreState extends State<TabExplore> {
                                   ],
                                 ),
                               ),
-                              if (purchase.transactionReference.isNotEmpty) ...[
+                              if (purchase.id.isNotEmpty) ...[
                                 getVerSpace(8.h),
-                                getCustomFont("Ref: ${purchase.transactionReference}", 12.sp, hintColor, 1,
+                                getCustomFont("Ref: ${purchase.id.substring(0, 8)}...", 12.sp, hintColor, 1,
                                     fontWeight: FontWeight.w400),
                               ],
                               getVerSpace(16.h),
@@ -237,7 +261,7 @@ class _TabExploreState extends State<TabExplore> {
     );
   }
 
-  void _repeatPurchase(ElectricityPurchaseModel purchase) {
+  void _repeatPurchase(Purchase purchase) {
     // Show payment dialog with the same purchase details
     Get.dialog(
       AlertDialog(
@@ -273,8 +297,10 @@ class _TabExploreState extends State<TabExplore> {
                     children: [
                       getCustomFont("Complex:", 14.sp, hintColor, 1,
                           fontWeight: FontWeight.w400),
-                      getCustomFont(purchase.complexName, 14.sp, Colors.black, 1,
-                          fontWeight: FontWeight.w600),
+                      Expanded(
+                        child: getCustomFont(purchase.estateName ?? 'No Complex', 14.sp, Colors.black, 1,
+                            fontWeight: FontWeight.w600, textAlign: TextAlign.end),
+                      ),
                     ],
                   ),
                   getVerSpace(8.h),
@@ -283,8 +309,10 @@ class _TabExploreState extends State<TabExplore> {
                     children: [
                       getCustomFont("Unit:", 14.sp, hintColor, 1,
                           fontWeight: FontWeight.w400),
-                      getCustomFont(purchase.unitNumber, 14.sp, Colors.black, 1,
-                          fontWeight: FontWeight.w600),
+                      Expanded(
+                        child: getCustomFont(purchase.unitNumber ?? purchase.unitId ?? 'N/A', 14.sp, Colors.black, 1,
+                            fontWeight: FontWeight.w600, textAlign: TextAlign.end),
+                      ),
                     ],
                   ),
                   getVerSpace(8.h),
@@ -293,7 +321,7 @@ class _TabExploreState extends State<TabExplore> {
                     children: [
                       getCustomFont("Amount:", 14.sp, hintColor, 1,
                           fontWeight: FontWeight.w400),
-                      getCustomFont("R${purchase.amountZar.toStringAsFixed(2)}", 14.sp, Colors.black, 1,
+                      getCustomFont("R${purchase.amount.final_.toStringAsFixed(2)}", 14.sp, Colors.black, 1,
                           fontWeight: FontWeight.w600),
                     ],
                   ),
@@ -303,7 +331,7 @@ class _TabExploreState extends State<TabExplore> {
                     children: [
                       getCustomFont("kWh:", 14.sp, hintColor, 1,
                           fontWeight: FontWeight.w400),
-                      getCustomFont("${purchase.kwhPurchased.toStringAsFixed(1)} kWh", 14.sp, Colors.black, 1,
+                      getCustomFont("${purchase.electricity.units.toStringAsFixed(1)} kWh", 14.sp, Colors.black, 1,
                           fontWeight: FontWeight.w600),
                     ],
                   ),
@@ -336,7 +364,7 @@ class _TabExploreState extends State<TabExplore> {
     );
   }
 
-  void _processPayment(ElectricityPurchaseModel originalPurchase) {
+  Future<void> _processPayment(Purchase originalPurchase) async {
     // Show payment processing dialog
     Get.dialog(
       AlertDialog(
@@ -359,38 +387,75 @@ class _TabExploreState extends State<TabExplore> {
       barrierDismissible: false,
     );
 
-    // Simulate payment processing
-    Future.delayed(Duration(seconds: 3), () {
-      Get.back(); // Close processing dialog
-      _showPaymentSuccess(originalPurchase);
-    });
+    try {
+      print('🔥 REPEAT PURCHASE: Starting API call...');
+      // Call the actual purchase API with the same amount and timeout
+      Purchase? newPurchase = await _purchaseService.createPurchase(
+        amount: originalPurchase.amount.final_,
+        unitId: originalPurchase.unitId,
+        meterId: originalPurchase.meterId,
+        paymentMethod: 'Card',
+      ).timeout(
+        Duration(seconds: 30),
+        onTimeout: () {
+          print('🔥 REPEAT PURCHASE: TIMEOUT occurred');
+          throw Exception('Request timeout. Please check your connection and try again.');
+        },
+      );
+
+      print('🔥 REPEAT PURCHASE: API call completed. Closing processing dialog...');
+      // Close processing dialog with proper error handling
+      _closeAllDialogs();
+      await Future.delayed(Duration(milliseconds: 200)); // Ensure dialog is fully closed
+      print('🔥 REPEAT PURCHASE: Processing dialog closed. Processing result...');
+
+      if (newPurchase != null) {
+        print('🔥 REPEAT PURCHASE: Purchase created with status: ${newPurchase.status}');
+        // Check if purchase is completed
+        if (newPurchase.status.toLowerCase() == 'completed') {
+          // Show success with real purchase data
+          _showPaymentSuccess(newPurchase);
+          // Refresh purchase history to show the new purchase
+          await _purchaseService.fetchPurchases();
+        } else if (newPurchase.status.toLowerCase() == 'pending') {
+          // Purchase created but still processing - show token anyway since it's already generated
+          print('🔥 REPEAT PURCHASE: Status is Pending - showing token and processing message');
+          _showPaymentSuccess(newPurchase);
+          Get.snackbar(
+            'Purchase Processing',
+            'Payment is being processed. Your token is ready to use.',
+            duration: Duration(seconds: 5),
+          );
+          print('🔥 REPEAT PURCHASE: Token shown - refreshing purchase history');
+          // Still refresh purchase history to show the pending purchase
+          await _purchaseService.fetchPurchases();
+          print('🔥 REPEAT PURCHASE: Purchase history refreshed');
+        } else {
+          // Purchase failed
+          Get.snackbar('Purchase Failed', 'Payment failed. Please try again.');
+        }
+      } else {
+        // Show error if purchase failed
+        Get.snackbar('Purchase Failed', 'Unable to process payment. Please try again.');
+      }
+    } catch (e) {
+      print('🔥 REPEAT PURCHASE ERROR: $e');
+      // Close processing dialog in error case
+      _closeAllDialogs();
+      await Future.delayed(Duration(milliseconds: 200)); // Ensure dialog is fully closed
+
+      if (e.toString().contains('timeout')) {
+        Get.snackbar('Timeout Error', 'Request timed out. Please check your connection and try again.');
+      } else if (e.toString().contains('CORS') || e.toString().contains('network')) {
+        Get.snackbar('Connection Error', 'Unable to connect to server. Please try again.');
+      } else {
+        Get.snackbar('Error', 'Purchase failed: $e');
+      }
+    }
   }
 
-  void _showPaymentSuccess(ElectricityPurchaseModel originalPurchase) {
-    // Generate new transaction details
-    String newToken = _generateToken();
-    String newTransactionRef = "KV00${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}";
-    
-    // Create new purchase record
-    ElectricityPurchaseModel newPurchase = ElectricityPurchaseModel(
-      "TXN${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}",
-      originalPurchase.complexName,
-      originalPurchase.meterNumber,
-      originalPurchase.unitNumber,
-      originalPurchase.amountZar,
-      originalPurchase.kwhPurchased,
-      newToken,
-      DateTime.now(),
-      "Completed",
-      newTransactionRef,
-    );
-
-    // Add to purchase history
-    setState(() {
-      purchaseHistory.insert(0, newPurchase);
-    });
-
-    // Show success dialog
+  void _showPaymentSuccess(Purchase newPurchase) {
+    // Show success dialog with better dialog management
     Get.dialog(
       AlertDialog(
         shape: RoundedRectangleBorder(
@@ -426,11 +491,12 @@ class _TabExploreState extends State<TabExplore> {
                   Row(
                     children: [
                       Expanded(
-                        child: getCustomFont(newToken, 16.sp, Colors.black, 1,
+                        child: getCustomFont(newPurchase.electricity.token ?? 'Token not available', 16.sp, Colors.black, 1,
                             fontWeight: FontWeight.w600),
                       ),
                       GestureDetector(
                         onTap: () {
+                          // Copy token to clipboard using flutter services
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(content: Text("Token copied to clipboard")),
                           );
@@ -463,7 +529,7 @@ class _TabExploreState extends State<TabExplore> {
                     children: [
                       getCustomFont("Amount:", 14.sp, hintColor, 1,
                           fontWeight: FontWeight.w400),
-                      getCustomFont("R${originalPurchase.amountZar.toStringAsFixed(2)}", 14.sp, Colors.black, 1,
+                      getCustomFont("R${newPurchase.amount.final_.toStringAsFixed(2)}", 14.sp, Colors.black, 1,
                           fontWeight: FontWeight.w600),
                     ],
                   ),
@@ -473,7 +539,7 @@ class _TabExploreState extends State<TabExplore> {
                     children: [
                       getCustomFont("kWh:", 14.sp, hintColor, 1,
                           fontWeight: FontWeight.w400),
-                      getCustomFont("${originalPurchase.kwhPurchased.toStringAsFixed(1)} kWh", 14.sp, Colors.black, 1,
+                      getCustomFont("${newPurchase.electricity.units.toStringAsFixed(1)} kWh", 14.sp, Colors.black, 1,
                           fontWeight: FontWeight.w600),
                     ],
                   ),
@@ -483,7 +549,7 @@ class _TabExploreState extends State<TabExplore> {
                     children: [
                       getCustomFont("Ref:", 14.sp, hintColor, 1,
                           fontWeight: FontWeight.w400),
-                      getCustomFont(newTransactionRef, 14.sp, Colors.black, 1,
+                      getCustomFont(newPurchase.transactionId ?? newPurchase.id.substring(0, 8), 14.sp, Colors.black, 1,
                           fontWeight: FontWeight.w600),
                     ],
                   ),
@@ -495,32 +561,110 @@ class _TabExploreState extends State<TabExplore> {
         actions: [
           TextButton(
             onPressed: () {
-              Get.back();
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text("Purchase added to your history"),
-                  backgroundColor: Colors.green,
-                ),
-              );
+              print('🔥 SUCCESS DIALOG: Done button clicked');
+              try {
+                // Force close dialog using multiple methods
+                Navigator.of(context).pop();
+                print('🔥 SUCCESS DIALOG: Navigator.pop() called');
+
+                // Also try Get.back() as backup
+                if (Get.isDialogOpen == true) {
+                  Get.back();
+                  print('🔥 SUCCESS DIALOG: Get.back() called as backup');
+                }
+
+                // Show success snackbar after a short delay
+                Future.delayed(Duration(milliseconds: 300), () {
+                  Get.snackbar(
+                    'Purchase Complete',
+                    'Your purchase has been added to history. Check More > Purchase History.',
+                    duration: Duration(seconds: 3),
+                    backgroundColor: Colors.green,
+                    colorText: Colors.white,
+                  );
+                });
+              } catch (e) {
+                print('🔥 SUCCESS DIALOG ERROR: $e');
+                // Fallback - force close any open dialogs
+                _closeAllDialogs();
+              }
             },
-            child: getCustomFont("View History", 16.sp, pacificBlue, 1,
+            child: getCustomFont("Done", 16.sp, pacificBlue, 1,
                 fontWeight: FontWeight.w600),
           ),
         ],
       ),
+      barrierDismissible: true,
     );
   }
 
-  String _generateToken() {
-    // Generate a 20-digit token (4 groups of 5 digits)
-    List<String> groups = [];
-    for (int i = 0; i < 4; i++) {
-      String group = '';
-      for (int j = 0; j < 5; j++) {
-        group += (DateTime.now().millisecondsSinceEpoch % 10).toString();
+  // Helper method to close all open dialogs properly
+  void _closeAllDialogs() {
+    try {
+      print('🔥 DIALOG CLOSE: Starting aggressive dialog cleanup');
+
+      // Method 1: Close using Navigator first (more reliable)
+      int navAttempts = 0;
+      while (navAttempts < 3) {
+        try {
+          if (Navigator.canPop(context)) {
+            Navigator.of(context).pop();
+            navAttempts++;
+            print('🔥 DIALOG CLOSE: Navigator.pop() attempt $navAttempts');
+          } else {
+            break;
+          }
+        } catch (e) {
+          print('🔥 DIALOG CLOSE: Navigator.pop() failed: $e');
+          break;
+        }
       }
-      groups.add(group);
+
+      // Method 2: Close using Get.back() as backup
+      int getAttempts = 0;
+      while (Get.isDialogOpen == true && getAttempts < 3) {
+        Get.back();
+        getAttempts++;
+        print('🔥 DIALOG CLOSE: Get.back() attempt $getAttempts - Dialog still open: ${Get.isDialogOpen}');
+      }
+
+      // Method 3: Force close all routes if still open
+      if (Get.isDialogOpen == true) {
+        print('🔥 DIALOG CLOSE: Force closing all overlays');
+        Get.until((route) => route.isFirst);
+      }
+
+      print('🔥 DIALOG CLOSE: Completed - Navigator attempts: $navAttempts, Get attempts: $getAttempts');
+    } catch (e) {
+      print('🔥 DIALOG CLOSE ERROR: $e');
+      // Final fallback: Force close using Navigator with rootNavigator
+      try {
+        Navigator.of(context, rootNavigator: true).pop();
+        print('🔥 DIALOG CLOSE: Used rootNavigator fallback');
+      } catch (navError) {
+        print('🔥 NAVIGATOR CLOSE ERROR: $navError');
+      }
     }
-    return groups.join('-');
   }
+
+  String _getDisplayLocation(Purchase purchase) {
+    List<String> parts = [];
+
+    if (purchase.estateName != null && purchase.estateName!.isNotEmpty) {
+      parts.add(purchase.estateName!);
+    }
+
+    if (purchase.unitNumber != null && purchase.unitNumber!.isNotEmpty) {
+      parts.add("Unit ${purchase.unitNumber}");
+    } else if (purchase.unitId != null && purchase.unitId!.isNotEmpty) {
+      parts.add("Unit ID: ${purchase.unitId}");
+    }
+
+    if (purchase.estateCity != null && purchase.estateCity!.isNotEmpty) {
+      parts.add(purchase.estateCity!);
+    }
+
+    return parts.isNotEmpty ? parts.join(" • ") : "No Location";
+  }
+
 }

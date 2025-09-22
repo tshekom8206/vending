@@ -3,6 +3,10 @@ import 'package:get/get.dart';
 import 'package:khanyi_vending_app/datafile/datafile.dart';
 import 'package:khanyi_vending_app/model/recomended_model.dart';
 import 'package:khanyi_vending_app/model/saved_home_model.dart';
+import 'package:khanyi_vending_app/model/api_models.dart';
+import 'package:khanyi_vending_app/services/auth_service.dart';
+import 'package:khanyi_vending_app/services/estate_service.dart';
+import 'package:khanyi_vending_app/services/purchase_service.dart';
 import 'package:syncfusion_flutter_sliders/sliders.dart';
 
 class IntroController extends GetxController {
@@ -164,11 +168,15 @@ class ComplexSelectionController extends GetxController {
 }
 
 class ElectricityPurchaseController extends GetxController {
+  final PurchaseService _purchaseService = Get.find<PurchaseService>();
+  final AuthService _authService = Get.find<AuthService>();
+
   RxDouble selectedAmount = 0.0.obs;
   RxDouble calculatedKwh = 0.0.obs;
   RxString selectedComplex = ''.obs;
   RxString selectedUnit = ''.obs;
   RxString selectedMeter = ''.obs;
+  RxBool isProcessing = false.obs;
 
   void setAmount(double amount) {
     selectedAmount.value = amount;
@@ -187,5 +195,143 @@ class ElectricityPurchaseController extends GetxController {
     selectedUnit.value = unit;
     selectedMeter.value = meter;
     update();
+  }
+
+  Future<bool> processPurchase() async {
+    if (selectedAmount.value <= 0 || selectedUnit.value.isEmpty) {
+      Get.snackbar('Error', 'Please select amount and unit');
+      return false;
+    }
+
+    isProcessing.value = true;
+    try {
+      final purchase = await _purchaseService.createPurchase(
+        unitId: selectedUnit.value,
+        meterId: selectedMeter.value,
+        amount: selectedAmount.value,
+      );
+
+      if (purchase != null) {
+        // Reset form
+        selectedAmount.value = 0.0;
+        calculatedKwh.value = 0.0;
+        return true;
+      }
+      return false;
+    } finally {
+      isProcessing.value = false;
+    }
+  }
+}
+
+class LoginController extends GetxController {
+  final AuthService _authService = Get.find<AuthService>();
+
+  final TextEditingController emailController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
+  final GlobalKey<FormState> loginForm = GlobalKey<FormState>();
+
+  Future<void> login() async {
+    if (loginForm.currentState!.validate()) {
+      final success = await _authService.login(
+        email: emailController.text.trim(),
+        password: passwordController.text,
+      );
+
+      if (success) {
+        Get.offAllNamed('/HomeScreen');
+      }
+    }
+  }
+
+  @override
+  void onClose() {
+    emailController.dispose();
+    passwordController.dispose();
+    super.onClose();
+  }
+}
+
+class SignUpController extends GetxController {
+  final AuthService _authService = Get.find<AuthService>();
+
+  final TextEditingController firstNameController = TextEditingController();
+  final TextEditingController lastNameController = TextEditingController();
+  final TextEditingController emailController = TextEditingController();
+  final TextEditingController phoneController = TextEditingController();
+  final TextEditingController idNumberController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
+  final TextEditingController confirmPasswordController = TextEditingController();
+  final GlobalKey<FormState> signUpForm = GlobalKey<FormState>();
+
+  Future<void> signUp() async {
+    if (signUpForm.currentState!.validate()) {
+      if (passwordController.text != confirmPasswordController.text) {
+        Get.snackbar('Error', 'Passwords do not match');
+        return;
+      }
+
+      final success = await _authService.register(
+        firstName: firstNameController.text.trim(),
+        lastName: lastNameController.text.trim(),
+        email: emailController.text.trim(),
+        phone: phoneController.text.trim(),
+        idNumber: idNumberController.text.trim(),
+        password: passwordController.text,
+      );
+
+      if (success) {
+        Get.offAllNamed('/HomeScreen');
+      }
+    }
+  }
+
+  @override
+  void onClose() {
+    firstNameController.dispose();
+    lastNameController.dispose();
+    emailController.dispose();
+    phoneController.dispose();
+    idNumberController.dispose();
+    passwordController.dispose();
+    confirmPasswordController.dispose();
+    super.onClose();
+  }
+}
+
+class HomeApiController extends GetxController {
+  final AuthService _authService = Get.find<AuthService>();
+  final EstateService _estateService = Get.find<EstateService>();
+  final PurchaseService _purchaseService = Get.find<PurchaseService>();
+
+  RxList<Estate> estates = <Estate>[].obs;
+  RxList<Purchase> recentPurchases = <Purchase>[].obs;
+  RxBool isLoading = false.obs;
+
+  @override
+  void onInit() {
+    super.onInit();
+    loadData();
+  }
+
+  Future<void> loadData() async {
+    isLoading.value = true;
+    try {
+      // Add small delay to ensure token is fully saved after login
+      await Future.delayed(Duration(milliseconds: 100));
+
+      // Call APIs sequentially to avoid race conditions with token
+      await _estateService.fetchEstates();
+      await _purchaseService.fetchPurchases();
+
+      estates.value = _estateService.estates;
+      recentPurchases.value = _purchaseService.getRecentPurchases(limit: 5);
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  Future<void> refreshData() async {
+    await loadData();
   }
 }
