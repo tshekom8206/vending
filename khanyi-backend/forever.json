@@ -3,10 +3,10 @@
   "append": true,
   "watch": false,
   "script": "server.js",
-  "sourceDir": "/home/ubuntu/khanyi-backend",
-  "logFile": "/home/ubuntu/khanyi-backend/logs/forever.log",
-  "outFile": "/home/ubuntu/khanyi-backend/logs/out.log",
-  "errFile": "/home/ubuntu/khanyi-backend/logs/error.log",
+  "sourceDir": "/home/ubuntu/vending/vending/khanyi-backend",
+  "logFile": "/home/ubuntu/vending/vending/khanyi-backend/logs/forever.log",
+  "outFile": "/home/ubuntu/vending/vending/khanyi-backend/logs/out.log",
+  "errFile": "/home/ubuntu/vending/vending/khanyi-backend/logs/error.log",
   "env": {
     "NODE_ENV": "production",
     "PORT": "3000"
