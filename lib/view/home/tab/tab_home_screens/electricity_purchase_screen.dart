@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:khanyi_vending_app/util/color_category.dart';
-import 'package:khanyi_vending_app/util/constant.dart';
 import 'package:khanyi_vending_app/util/constant_widget.dart';
 import 'package:khanyi_vending_app/util/token_generator.dart';
 import 'package:khanyi_vending_app/view/home/home_screen.dart';
@@ -27,7 +26,8 @@ class ElectricityPurchaseScreen extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  State<ElectricityPurchaseScreen> createState() => _ElectricityPurchaseScreenState();
+  State<ElectricityPurchaseScreen> createState() =>
+      _ElectricityPurchaseScreenState();
 }
 
 class _ElectricityPurchaseScreenState extends State<ElectricityPurchaseScreen> {
@@ -68,20 +68,24 @@ class _ElectricityPurchaseScreenState extends State<ElectricityPurchaseScreen> {
 
   Future<void> _loadUserUnitData() async {
     try {
-      setState(() { isLoadingUserData = true; });
+      setState(() {
+        isLoadingUserData = true;
+      });
 
       userUnitData = await _authService.getUserUnit();
       if (userUnitData != null) {
         userComplexName = userUnitData!['unit']['estate']['name'];
         userUnitNumber = userUnitData!['unit']['unitNumber'];
         userMeterNumber = userUnitData!['meter']?['meterNumber'];
-        tariffValue = userUnitData!['unit']['estate']['tariff']['rate'].toDouble();
+        tariffValue =
+            userUnitData!['unit']['estate']['tariff']['rate'].toDouble();
       } else {
         // Fallback to widget values if no user unit found
         userComplexName = widget.complexName;
         userUnitNumber = widget.unitNumber;
         userMeterNumber = widget.meterNumber;
-        String tariffString = widget.tariffRate.replaceAll('R', '').replaceAll('/kWh', '');
+        String tariffString =
+            widget.tariffRate.replaceAll('R', '').replaceAll('/kWh', '');
         tariffValue = double.tryParse(tariffString) ?? 2.50;
       }
     } catch (e) {
@@ -90,16 +94,20 @@ class _ElectricityPurchaseScreenState extends State<ElectricityPurchaseScreen> {
       userComplexName = widget.complexName;
       userUnitNumber = widget.unitNumber;
       userMeterNumber = widget.meterNumber;
-      String tariffString = widget.tariffRate.replaceAll('R', '').replaceAll('/kWh', '');
+      String tariffString =
+          widget.tariffRate.replaceAll('R', '').replaceAll('/kWh', '');
       tariffValue = double.tryParse(tariffString) ?? 2.50;
     } finally {
-      setState(() { isLoadingUserData = false; });
+      setState(() {
+        isLoadingUserData = false;
+      });
     }
   }
 
   Future<void> _loadAvailableEstates() async {
     try {
-      print('🔥 LOADING AVAILABLE ESTATES: Starting to load estates with units...');
+      print(
+          '🔥 LOADING AVAILABLE ESTATES: Starting to load estates with units...');
 
       // Fetch estates that have units (for electricity purchase)
       await _estateService.fetchEstatesWithUnits();
@@ -108,7 +116,8 @@ class _ElectricityPurchaseScreenState extends State<ElectricityPurchaseScreen> {
         setState(() {
           availableEstates = _estateService.estates;
         });
-        print('🔥 LOADING AVAILABLE ESTATES: Successfully loaded ${availableEstates.length} estates with units');
+        print(
+            '🔥 LOADING AVAILABLE ESTATES: Successfully loaded ${availableEstates.length} estates with units');
       }
     } catch (e) {
       print('🔥 LOADING AVAILABLE ESTATES ERROR: $e');
@@ -149,7 +158,8 @@ class _ElectricityPurchaseScreenState extends State<ElectricityPurchaseScreen> {
 
   void updateKwh() {
     if (selectedAmount > 0) {
-      calculatedKwh = TokenGenerator.calculateKwhFromAmount(selectedAmount, tariffValue);
+      calculatedKwh =
+          TokenGenerator.calculateKwhFromAmount(selectedAmount, tariffValue);
       setState(() {});
     }
   }
@@ -218,7 +228,8 @@ class _ElectricityPurchaseScreenState extends State<ElectricityPurchaseScreen> {
       if (purchase != null) {
         showPurchaseSuccessDialog(purchase);
       } else {
-        Get.snackbar("Purchase Failed", "Unable to process your purchase. Please try again.");
+        Get.snackbar("Purchase Failed",
+            "Unable to process your purchase. Please try again.");
       }
     } catch (e) {
       Get.snackbar("Error", "Purchase failed: $e");
@@ -230,7 +241,8 @@ class _ElectricityPurchaseScreenState extends State<ElectricityPurchaseScreen> {
   }
 
   void showPurchaseSuccessDialog(Purchase purchase) {
-    String token = purchase.electricity.token ?? TokenGenerator.generateElectricityToken();
+    String token =
+        purchase.electricity.token ?? TokenGenerator.generateElectricityToken();
     String transactionRef = purchase.id;
     showDialog(
       context: context,
@@ -240,7 +252,7 @@ class _ElectricityPurchaseScreenState extends State<ElectricityPurchaseScreen> {
           children: [
             Icon(Icons.check_circle, color: Colors.green, size: 30.h),
             getHorSpace(10.w),
-            getCustomFont("Purchase Successful!", 18.sp, Colors.black, 1, 
+            getCustomFont("Purchase Successful!", 18.sp, Colors.black, 1,
                 fontWeight: FontWeight.w600),
           ],
         ),
@@ -278,8 +290,16 @@ class _ElectricityPurchaseScreenState extends State<ElectricityPurchaseScreen> {
             getCustomFont("Transaction Details:", 14.sp, Colors.black, 1,
                 fontWeight: FontWeight.w500),
             getVerSpace(5.h),
-            getCustomFont("Amount: R${purchase.amount.final_.toStringAsFixed(2)}", 12.sp, hintColor, 1),
-            getCustomFont("Units: ${purchase.electricity.units.toStringAsFixed(2)} kWh", 12.sp, hintColor, 1),
+            getCustomFont(
+                "Amount: R${purchase.amount.final_.toStringAsFixed(2)}",
+                12.sp,
+                hintColor,
+                1),
+            getCustomFont(
+                "Units: ${purchase.electricity.units.toStringAsFixed(2)} kWh",
+                12.sp,
+                hintColor,
+                1),
             getCustomFont("Reference: $transactionRef", 12.sp, hintColor, 1),
             getCustomFont("Meter: ${widget.meterNumber}", 12.sp, hintColor, 1),
           ],
@@ -315,7 +335,7 @@ class _ElectricityPurchaseScreenState extends State<ElectricityPurchaseScreen> {
               getAppBar("Purchase Electricity", () => backClick())
                   .paddingSymmetric(horizontal: 20.w),
               getVerSpace(30.h),
-              
+
               // Purchase Type Toggle
               Container(
                 margin: EdgeInsets.symmetric(horizontal: 20.w),
@@ -323,7 +343,9 @@ class _ElectricityPurchaseScreenState extends State<ElectricityPurchaseScreen> {
                   children: [
                     Expanded(
                       child: GestureDetector(
-                        onTap: () => setState(() { purchaseForSelf = true; }),
+                        onTap: () => setState(() {
+                          purchaseForSelf = true;
+                        }),
                         child: Container(
                           padding: EdgeInsets.symmetric(vertical: 12.h),
                           decoration: BoxDecoration(
@@ -342,17 +364,23 @@ class _ElectricityPurchaseScreenState extends State<ElectricityPurchaseScreen> {
                     getHorSpace(10.w),
                     Expanded(
                       child: GestureDetector(
-                        onTap: () => setState(() { purchaseForSelf = false; }),
+                        onTap: () => setState(() {
+                          purchaseForSelf = false;
+                        }),
                         child: Container(
                           padding: EdgeInsets.symmetric(vertical: 12.h),
                           decoration: BoxDecoration(
-                            color: !purchaseForSelf ? pacificBlue : Colors.white,
+                            color:
+                                !purchaseForSelf ? pacificBlue : Colors.white,
                             borderRadius: BorderRadius.circular(8.h),
                             border: Border.all(color: pacificBlue),
                           ),
                           child: Center(
-                            child: getCustomFont("For Someone Else", 14.sp,
-                                !purchaseForSelf ? Colors.white : pacificBlue, 1,
+                            child: getCustomFont(
+                                "For Someone Else",
+                                14.sp,
+                                !purchaseForSelf ? Colors.white : pacificBlue,
+                                1,
                                 fontWeight: FontWeight.w600),
                           ),
                         ),
@@ -399,19 +427,26 @@ class _ElectricityPurchaseScreenState extends State<ElectricityPurchaseScreen> {
                         ],
                       ),
                       getVerSpace(10.h),
-                      getCustomFont(userComplexName ?? 'Loading...', 18.sp, Colors.black, 1,
+                      getCustomFont(userComplexName ?? 'Loading...', 18.sp,
+                          Colors.black, 1,
                           fontWeight: FontWeight.w600),
                       getVerSpace(8.h),
                       Row(
                         children: [
-                          getCustomFont("Unit: ${userUnitNumber ?? 'N/A'}", 14.sp, hintColor, 1),
+                          getCustomFont("Unit: ${userUnitNumber ?? 'N/A'}",
+                              14.sp, hintColor, 1),
                           Spacer(),
-                          getCustomFont("R${tariffValue.toStringAsFixed(2)}/kWh", 14.sp, pacificBlue, 1,
+                          getCustomFont(
+                              "R${tariffValue.toStringAsFixed(2)}/kWh",
+                              14.sp,
+                              pacificBlue,
+                              1,
                               fontWeight: FontWeight.w600),
                         ],
                       ),
                       getVerSpace(5.h),
-                      getCustomFont("Meter: ${userMeterNumber ?? 'N/A'}", 12.sp, hintColor, 1),
+                      getCustomFont("Meter: ${userMeterNumber ?? 'N/A'}", 12.sp,
+                          hintColor, 1),
                     ],
                   ),
                 )
@@ -449,7 +484,8 @@ class _ElectricityPurchaseScreenState extends State<ElectricityPurchaseScreen> {
                           fontWeight: FontWeight.w500),
                       getVerSpace(8.h),
                       Container(
-                        padding: EdgeInsets.symmetric(horizontal: 15.w, vertical: 12.h),
+                        padding: EdgeInsets.symmetric(
+                            horizontal: 15.w, vertical: 12.h),
                         decoration: BoxDecoration(
                           border: Border.all(color: Colors.grey.shade300),
                           borderRadius: BorderRadius.circular(8.h),
@@ -458,7 +494,8 @@ class _ElectricityPurchaseScreenState extends State<ElectricityPurchaseScreen> {
                           value: selectedEstate,
                           isExpanded: true,
                           underline: SizedBox(),
-                          hint: getCustomFont("Choose a complex", 14.sp, hintColor, 1),
+                          hint: getCustomFont(
+                              "Choose a complex", 14.sp, hintColor, 1),
                           onChanged: (Estate? estate) {
                             setState(() {
                               selectedEstate = estate;
@@ -471,7 +508,8 @@ class _ElectricityPurchaseScreenState extends State<ElectricityPurchaseScreen> {
                           items: availableEstates.map((Estate estate) {
                             return DropdownMenuItem<Estate>(
                               value: estate,
-                              child: getCustomFont(estate.name, 14.sp, Colors.black, 1),
+                              child: getCustomFont(
+                                  estate.name, 14.sp, Colors.black, 1),
                             );
                           }).toList(),
                         ),
@@ -485,7 +523,8 @@ class _ElectricityPurchaseScreenState extends State<ElectricityPurchaseScreen> {
                             fontWeight: FontWeight.w500),
                         getVerSpace(8.h),
                         Container(
-                          padding: EdgeInsets.symmetric(horizontal: 15.w, vertical: 12.h),
+                          padding: EdgeInsets.symmetric(
+                              horizontal: 15.w, vertical: 12.h),
                           decoration: BoxDecoration(
                             border: Border.all(color: Colors.grey.shade300),
                             borderRadius: BorderRadius.circular(8.h),
@@ -494,7 +533,8 @@ class _ElectricityPurchaseScreenState extends State<ElectricityPurchaseScreen> {
                             value: selectedUnit,
                             isExpanded: true,
                             underline: SizedBox(),
-                            hint: getCustomFont("Choose a unit", 14.sp, hintColor, 1),
+                            hint: getCustomFont(
+                                "Choose a unit", 14.sp, hintColor, 1),
                             onChanged: (Unit? unit) {
                               setState(() {
                                 selectedUnit = unit;
@@ -503,7 +543,8 @@ class _ElectricityPurchaseScreenState extends State<ElectricityPurchaseScreen> {
                             items: availableUnits.map((Unit unit) {
                               return DropdownMenuItem<Unit>(
                                 value: unit,
-                                child: getCustomFont("Unit ${unit.unitNumber}", 14.sp, Colors.black, 1),
+                                child: getCustomFont("Unit ${unit.unitNumber}",
+                                    14.sp, Colors.black, 1),
                               );
                             }).toList(),
                           ),
@@ -512,15 +553,15 @@ class _ElectricityPurchaseScreenState extends State<ElectricityPurchaseScreen> {
                     ],
                   ),
                 ),
-              
+
               getVerSpace(30.h),
-              
+
               // Amount Input Section
               getCustomFont("Purchase Amount (ZAR)", 16.sp, Colors.black, 1,
-                  fontWeight: FontWeight.w600)
+                      fontWeight: FontWeight.w600)
                   .paddingSymmetric(horizontal: 20.w),
               getVerSpace(10.h),
-              
+
               // Preset Amount Buttons
               SizedBox(
                 height: 50.h,
@@ -531,12 +572,13 @@ class _ElectricityPurchaseScreenState extends State<ElectricityPurchaseScreen> {
                   itemBuilder: (context, index) {
                     double amount = TokenGenerator.getPresetAmounts()[index];
                     bool isSelected = selectedAmount == amount;
-                    
+
                     return GestureDetector(
                       onTap: () => selectPresetAmount(amount),
                       child: Container(
                         margin: EdgeInsets.only(right: 10.w),
-                        padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 12.h),
+                        padding: EdgeInsets.symmetric(
+                            horizontal: 20.w, vertical: 12.h),
                         decoration: BoxDecoration(
                           color: isSelected ? pacificBlue : Colors.white,
                           borderRadius: BorderRadius.circular(25.h),
@@ -550,9 +592,9 @@ class _ElectricityPurchaseScreenState extends State<ElectricityPurchaseScreen> {
                   },
                 ),
               ),
-              
+
               getVerSpace(20.h),
-              
+
               // Custom Amount Input
               defaultTextField(
                 context,
@@ -561,9 +603,9 @@ class _ElectricityPurchaseScreenState extends State<ElectricityPurchaseScreen> {
                 keyboardType: TextInputType.number,
                 onChanged: onAmountChanged,
               ).paddingSymmetric(horizontal: 20.w),
-              
+
               getVerSpace(20.h),
-              
+
               // Calculation Display
               if (calculatedKwh > 0)
                 Container(
@@ -576,21 +618,21 @@ class _ElectricityPurchaseScreenState extends State<ElectricityPurchaseScreen> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      getCustomFont("You will receive:", 14.sp, Colors.black, 1),
-                      getCustomFont("${calculatedKwh.toStringAsFixed(1)} kWh", 16.sp, pacificBlue, 1,
+                      getCustomFont(
+                          "You will receive:", 14.sp, Colors.black, 1),
+                      getCustomFont("${calculatedKwh.toStringAsFixed(1)} kWh",
+                          16.sp, pacificBlue, 1,
                           fontWeight: FontWeight.w600),
                     ],
                   ),
                 ),
-              
+
               Spacer(),
-              
-              // Purchase Button
-              getButton(
+
+              // Enhanced Purchase Button with Modern Design
+              getGradientButton(
                 context,
-                isProcessing ? Colors.grey : pacificBlue,
                 isProcessing ? "Processing..." : "Purchase Electricity",
-                Colors.white,
                 () {
                   print('🔥 BUTTON CLICKED! isProcessing: $isProcessing');
                   if (!isProcessing) {
@@ -600,11 +642,15 @@ class _ElectricityPurchaseScreenState extends State<ElectricityPurchaseScreen> {
                   }
                 },
                 16.sp,
-                buttonHeight: 60.h,
-                weight: FontWeight.w600,
-                borderRadius: BorderRadius.circular(16.h),
+                gradientColors: isProcessing
+                    ? [Colors.grey, Colors.grey.withOpacity(0.8)]
+                    : [primaryGradientStart, primaryGradientEnd],
+                textColor: Colors.white,
+                buttonHeight: 64.h,
+                weight: FontWeight.w700,
+                borderRadius: BorderRadius.circular(20.h),
               ).paddingSymmetric(horizontal: 20.w),
-              
+
               getVerSpace(30.h),
             ],
           ),

@@ -1,0 +1,19 @@
+{
+  "uid": "khanyi-backend",
+  "append": true,
+  "watch": false,
+  "script": "server.js",
+  "sourceDir": "/home/ubuntu/khanyi-backend",
+  "logFile": "/home/ubuntu/khanyi-backend/logs/forever.log",
+  "outFile": "/home/ubuntu/khanyi-backend/logs/out.log",
+  "errFile": "/home/ubuntu/khanyi-backend/logs/error.log",
+  "env": {
+    "NODE_ENV": "production",
+    "PORT": "3000"
+  },
+  "args": [],
+  "minUptime": "10s",
+  "maxRestarts": 10,
+  "killSignal": "SIGTERM",
+  "killTimeout": 5000
+}

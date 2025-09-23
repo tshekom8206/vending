@@ -4,9 +4,10 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/foundation.dart';
 import 'package:dio/dio.dart';
+import 'package:khanyi_vending_app/config/environment.dart';
 
 class ApiService {
-  static const String baseUrl = 'http://localhost:3000/api/v1';
+  static String get baseUrl => Environment.apiBaseUrl;
 
   dynamic _dio;
   bool get isWeb => kIsWeb;
@@ -26,21 +27,21 @@ class ApiService {
 
         // Add simple logging interceptor for mobile
         (_dio as Dio).interceptors.add(
-          InterceptorsWrapper(
-            onRequest: (options, handler) {
-              log('API Request: ${options.method} ${options.uri}');
-              handler.next(options);
-            },
-            onResponse: (response, handler) {
-              log('API Response: ${response.statusCode}');
-              handler.next(response);
-            },
-            onError: (error, handler) {
-              log('API Error: ${error.response?.statusCode} ${error.message}');
-              handler.next(error);
-            },
-          ),
-        );
+              InterceptorsWrapper(
+                onRequest: (options, handler) {
+                  log('API Request: ${options.method} ${options.uri}');
+                  handler.next(options);
+                },
+                onResponse: (response, handler) {
+                  log('API Response: ${response.statusCode}');
+                  handler.next(response);
+                },
+                onError: (error, handler) {
+                  log('API Error: ${error.response?.statusCode} ${error.message}');
+                  handler.next(error);
+                },
+              ),
+            );
       } catch (e) {
         // If Dio fails to initialize on web, fall back to HTTP
         log('🌐 Dio failed to initialize, using HTTP client: $e');
@@ -111,11 +112,13 @@ class ApiService {
 
       print('🌐 HTTP GET Request: $uri');
       final response = await http.get(uri, headers: headers);
-      print('🔥 FETCH PURCHASES RAW: Response status code: ${response.statusCode}');
+      print(
+          '🔥 FETCH PURCHASES RAW: Response status code: ${response.statusCode}');
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
         final data = jsonDecode(response.body);
-        print('🔥 FETCH PURCHASES RAW: Response data type: ${data.runtimeType}');
+        print(
+            '🔥 FETCH PURCHASES RAW: Response data type: ${data.runtimeType}');
         print('🔥 FETCH PURCHASES RAW: Response success: ${data['success']}');
         return data as Map<String, dynamic>;
       } else {
@@ -146,7 +149,8 @@ class ApiService {
       if (isWeb) {
         print('🔥 Taking WEB path for GET');
         print('🔥 About to call _httpGet...');
-        final result = await _httpGet<T>(endpoint, queryParameters: queryParameters);
+        final result =
+            await _httpGet<T>(endpoint, queryParameters: queryParameters);
         print('🔥 _httpGet returned: ${result.success}');
         return result;
       } else {
@@ -167,7 +171,8 @@ class ApiService {
     try {
       final headers = await _buildHeaders();
       final uri = Uri.parse('$baseUrl$endpoint').replace(
-        queryParameters: queryParameters?.map((key, value) => MapEntry(key, value.toString())),
+        queryParameters: queryParameters
+            ?.map((key, value) => MapEntry(key, value.toString())),
       );
 
       log('🌐 HTTP GET Request: $uri');
@@ -237,13 +242,15 @@ class ApiService {
         print('🔥 Taking WEB path');
         print('🔥 About to call _httpPost...');
         log('🔥 CALLING _httpPost for web');
-        final result = await _httpPost<T>(endpoint, data: data, queryParameters: queryParameters);
+        final result = await _httpPost<T>(endpoint,
+            data: data, queryParameters: queryParameters);
         print('🔥 _httpPost returned: ${result.success}');
         return result;
       } else {
         print('🔥 Taking MOBILE path');
         log('🔥 CALLING _dioPost for mobile');
-        return _dioPost<T>(endpoint, data: data, queryParameters: queryParameters);
+        return _dioPost<T>(endpoint,
+            data: data, queryParameters: queryParameters);
       }
     } catch (e) {
       print('🔥 EXCEPTION in API service post: $e');
@@ -262,7 +269,8 @@ class ApiService {
       print('🔥 _httpPost: Starting HTTP POST request...');
       final headers = await _buildHeaders();
       final uri = Uri.parse('$baseUrl$endpoint').replace(
-        queryParameters: queryParameters?.map((key, value) => MapEntry(key, value.toString())),
+        queryParameters: queryParameters
+            ?.map((key, value) => MapEntry(key, value.toString())),
       );
       final body = data != null ? jsonEncode(data) : null;
 
@@ -316,7 +324,8 @@ class ApiService {
     Map<String, dynamic>? queryParameters,
   }) async {
     if (isWeb) {
-      return _httpPut<T>(endpoint, data: data, queryParameters: queryParameters);
+      return _httpPut<T>(endpoint,
+          data: data, queryParameters: queryParameters);
     } else {
       return _dioPut<T>(endpoint, data: data, queryParameters: queryParameters);
     }
@@ -331,7 +340,8 @@ class ApiService {
     try {
       final headers = await _buildHeaders();
       final uri = Uri.parse('$baseUrl$endpoint').replace(
-        queryParameters: queryParameters?.map((key, value) => MapEntry(key, value.toString())),
+        queryParameters: queryParameters
+            ?.map((key, value) => MapEntry(key, value.toString())),
       );
       final body = data != null ? jsonEncode(data) : null;
 
@@ -397,7 +407,8 @@ class ApiService {
     try {
       final headers = await _buildHeaders();
       final uri = Uri.parse('$baseUrl$endpoint').replace(
-        queryParameters: queryParameters?.map((key, value) => MapEntry(key, value.toString())),
+        queryParameters: queryParameters
+            ?.map((key, value) => MapEntry(key, value.toString())),
       );
 
       log('API Request: DELETE $uri');

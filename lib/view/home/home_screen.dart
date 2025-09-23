@@ -71,27 +71,31 @@ class _HomeScreenState extends State<HomeScreen> {
           resizeToAvoidBottomInset: false,
           bottomNavigationBar: Container(
               decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.only(
-                    topRight: Radius.circular(20.h),
-                    topLeft: Radius.circular(20.h)
+                  gradient: LinearGradient(
+                    colors: [Colors.white, surfaceColor],
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
                   ),
+                  borderRadius: BorderRadius.only(
+                      topRight: Radius.circular(28.h),
+                      topLeft: Radius.circular(28.h)),
                   boxShadow: [
                     BoxShadow(
-                        offset: Offset(0, -2),
-                        blurRadius: 12,
+                        offset: Offset(0, -8),
+                        blurRadius: 25,
                         spreadRadius: 0,
-                        color: Colors.black.withOpacity(0.08)
-                    )
-                  ]
-              ),
+                        color: shadowColor.withOpacity(0.15)),
+                    BoxShadow(
+                        offset: Offset(0, -2),
+                        blurRadius: 8,
+                        spreadRadius: 0,
+                        color: Colors.black.withOpacity(0.05))
+                  ]),
               child: ClipRRect(
-                borderRadius: BorderRadius.only(
-                  topRight: Radius.circular(20.h),
-                  topLeft: Radius.circular(20.h)
-                ),
-                child: buildBottomnavigation(controller)
-              )),
+                  borderRadius: BorderRadius.only(
+                      topRight: Radius.circular(28.h),
+                      topLeft: Radius.circular(28.h)),
+                  child: buildBottomnavigation(controller))),
           body: SafeArea(
             child: GetX<HomeController>(
               init: HomeController(),
@@ -117,14 +121,14 @@ class _HomeScreenState extends State<HomeScreen> {
       selectedFontSize: 11.sp,
       unselectedFontSize: 10.sp,
       selectedLabelStyle: TextStyle(
-        fontWeight: FontWeight.w600, 
-        color: pacificBlue, 
+        fontWeight: FontWeight.w600,
+        color: pacificBlue,
         fontSize: 11.sp,
         fontFamily: 'SF UI Text',
       ),
       unselectedLabelStyle: TextStyle(
-        fontWeight: FontWeight.w500, 
-        color: hintColor.withOpacity(0.6), 
+        fontWeight: FontWeight.w500,
+        color: hintColor.withOpacity(0.6),
         fontSize: 10.sp,
         fontFamily: 'SF UI Text',
       ),
@@ -134,79 +138,143 @@ class _HomeScreenState extends State<HomeScreen> {
           label: "Home",
           icon: Container(
             padding: EdgeInsets.all(4.h),
-            child: getSvgImage("home.svg", height: 20.h, width: 20.w, color: hintColor.withOpacity(0.6)),
+            child: getSvgImage("home.svg",
+                height: 20.h, width: 20.w, color: hintColor.withOpacity(0.6)),
           ),
           activeIcon: Container(
-            padding: EdgeInsets.all(4.h),
+            padding: EdgeInsets.all(8.h),
             decoration: BoxDecoration(
-              color: pacificBlue.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8.h),
+              gradient: LinearGradient(
+                colors: [primaryGradientStart, primaryGradientEnd],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(16.h),
+              boxShadow: [
+                BoxShadow(
+                  color: primaryGradientStart.withOpacity(0.3),
+                  blurRadius: 12,
+                  offset: Offset(0, 4),
+                ),
+              ],
             ),
-            child: getSvgImage("home_bold.svg", height: 20.h, width: 20.w, color: pacificBlue),
+            child: getSvgImage("home_bold.svg",
+                height: 20.h, width: 20.w, color: Colors.white),
           ),
         ),
         BottomNavigationBarItem(
           label: "History",
           icon: Container(
             padding: EdgeInsets.all(4.h),
-            child: getSvgImage("explore.svg", height: 20.h, width: 20.w, color: hintColor.withOpacity(0.6)),
+            child: getSvgImage("explore.svg",
+                height: 20.h, width: 20.w, color: hintColor.withOpacity(0.6)),
           ),
           activeIcon: Container(
-            padding: EdgeInsets.all(4.h),
+            padding: EdgeInsets.all(8.h),
             decoration: BoxDecoration(
-              color: pacificBlue.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8.h),
+              gradient: LinearGradient(
+                colors: [primaryGradientStart, primaryGradientEnd],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(16.h),
+              boxShadow: [
+                BoxShadow(
+                  color: primaryGradientStart.withOpacity(0.3),
+                  blurRadius: 12,
+                  offset: Offset(0, 4),
+                ),
+              ],
             ),
-            child: getSvgImage("explorer_bold.svg", height: 20.h, width: 20.w, color: pacificBlue),
+            child: getSvgImage("explorer_bold.svg",
+                height: 20.h, width: 20.w, color: Colors.white),
           ),
         ),
         BottomNavigationBarItem(
           label: "Reports",
           icon: Container(
             padding: EdgeInsets.all(4.h),
-            child: getSvgImage("saved.svg", height: 20.h, width: 20.w, color: hintColor.withOpacity(0.6)),
+            child: getSvgImage("saved.svg",
+                height: 20.h, width: 20.w, color: hintColor.withOpacity(0.6)),
           ),
           activeIcon: Container(
-            padding: EdgeInsets.all(4.h),
+            padding: EdgeInsets.all(8.h),
             decoration: BoxDecoration(
-              color: pacificBlue.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8.h),
+              gradient: LinearGradient(
+                colors: [primaryGradientStart, primaryGradientEnd],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(16.h),
+              boxShadow: [
+                BoxShadow(
+                  color: primaryGradientStart.withOpacity(0.3),
+                  blurRadius: 12,
+                  offset: Offset(0, 4),
+                ),
+              ],
             ),
-            child: getSvgImage("saved_bold.svg", height: 20.h, width: 20.w, color: pacificBlue),
+            child: getSvgImage("saved_bold.svg",
+                height: 20.h, width: 20.w, color: Colors.white),
           ),
         ),
         BottomNavigationBarItem(
           label: "Support",
           icon: Container(
             padding: EdgeInsets.all(4.h),
-            child: getSvgImage("messages.svg", height: 20.h, width: 20.w, color: hintColor.withOpacity(0.6)),
+            child: getSvgImage("messages.svg",
+                height: 20.h, width: 20.w, color: hintColor.withOpacity(0.6)),
           ),
           activeIcon: Container(
-            padding: EdgeInsets.all(4.h),
+            padding: EdgeInsets.all(8.h),
             decoration: BoxDecoration(
-              color: pacificBlue.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8.h),
+              gradient: LinearGradient(
+                colors: [primaryGradientStart, primaryGradientEnd],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(16.h),
+              boxShadow: [
+                BoxShadow(
+                  color: primaryGradientStart.withOpacity(0.3),
+                  blurRadius: 12,
+                  offset: Offset(0, 4),
+                ),
+              ],
             ),
-            child: getSvgImage("message_bold.svg", height: 20.h, width: 20.w, color: pacificBlue),
+            child: getSvgImage("message_bold.svg",
+                height: 20.h, width: 20.w, color: Colors.white),
           ),
         ),
         BottomNavigationBarItem(
           label: "More",
           icon: Container(
             padding: EdgeInsets.all(4.h),
-            child: getSvgImage("setting.svg", height: 20.h, width: 20.w, color: hintColor.withOpacity(0.6)),
+            child: getSvgImage("setting.svg",
+                height: 20.h, width: 20.w, color: hintColor.withOpacity(0.6)),
           ),
           activeIcon: Container(
-            padding: EdgeInsets.all(4.h),
+            padding: EdgeInsets.all(8.h),
             decoration: BoxDecoration(
-              color: pacificBlue.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8.h),
+              gradient: LinearGradient(
+                colors: [primaryGradientStart, primaryGradientEnd],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(16.h),
+              boxShadow: [
+                BoxShadow(
+                  color: primaryGradientStart.withOpacity(0.3),
+                  blurRadius: 12,
+                  offset: Offset(0, 4),
+                ),
+              ],
             ),
-            child: getSvgImage("setting_bold_icon.svg", height: 20.h, width: 20.w, color: pacificBlue),
+            child: getSvgImage("setting_bold_icon.svg",
+                height: 20.h, width: 20.w, color: Colors.white),
           ),
         ),
       ],
     );
   }
-
 }

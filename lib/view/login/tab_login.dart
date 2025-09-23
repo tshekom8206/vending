@@ -78,12 +78,19 @@ class _TabLoginState extends State<TabLogin> {
   }
 
   Widget buildLoginButton(BuildContext context) {
-    return getButton(context, pacificBlue, "Login", Colors.white, () async {
-      await loginController.login();
-    }, 18.sp,
-        weight: FontWeight.w700,
-        buttonHeight: 60.h,
-        borderRadius: BorderRadius.circular(16.h));
+    return getGradientButton(
+      context,
+      "Login",
+      () async {
+        await loginController.login();
+      },
+      18.sp,
+      gradientColors: [primaryGradientStart, primaryGradientEnd],
+      textColor: Colors.white,
+      buttonHeight: 64.h,
+      weight: FontWeight.w700,
+      borderRadius: BorderRadius.circular(20.h),
+    );
   }
 
   Align buildForgotButton() {
@@ -106,7 +113,8 @@ class _TabLoginState extends State<TabLogin> {
         getCustomFont("Email Address", 16.sp, Colors.black, 1,
             fontWeight: FontWeight.w600, txtHeight: 1.5),
         getVerSpace(6.h),
-        defaultTextField(context, loginController.emailController, "Email Address",
+        defaultTextField(
+            context, loginController.emailController, "Email Address",
             validator: (email) {
           if (email == null || email.isEmpty) {
             return 'Please enter email address';
@@ -122,7 +130,8 @@ class _TabLoginState extends State<TabLogin> {
         getCustomFont("Password", 16.sp, Colors.black, 1,
             fontWeight: FontWeight.w600, txtHeight: 1.5),
         getVerSpace(6.h),
-        defaultTextField(context, loginController.passwordController, "Your Password",
+        defaultTextField(
+            context, loginController.passwordController, "Your Password",
             validator: (password) {
           if (password == null || password.isEmpty) {
             return 'Please enter valid password';

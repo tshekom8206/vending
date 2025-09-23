@@ -1,4 +1,3 @@
-
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -93,7 +92,10 @@ Widget getButton(BuildContext context, Color bgColor, String text,
     List<BoxShadow> boxShadow = const [],
     EdgeInsetsGeometry? insetsGeometrypadding,
     BorderRadius? borderRadius,
-    double? borderWidth}) {
+    double? borderWidth,
+    bool isGradient = false,
+    List<Color>? gradientColors,
+    bool isGlassmorphism = false}) {
   return InkWell(
     onTap: () {
       function();
@@ -103,14 +105,48 @@ Widget getButton(BuildContext context, Color bgColor, String text,
       padding: insetsGeometrypadding,
       width: buttonWidth,
       height: buttonHeight,
-      decoration: getButtonDecoration(
-        bgColor,
-        borderRadius: borderRadius,
-        shadow: boxShadow,
-        border: (isBorder)
-            ? Border.all(color: borderColor, width: borderWidth!)
-            : null,
-      ),
+      decoration: isGlassmorphism
+          ? BoxDecoration(
+              gradient: LinearGradient(
+                colors: [glassWhite, glassWhite.withOpacity(0.1)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: borderRadius ?? BorderRadius.circular(16.h),
+              border: Border.all(color: glassBorder, width: 1.5),
+              boxShadow: [
+                BoxShadow(
+                  color: glassShadow,
+                  blurRadius: 20,
+                  offset: Offset(0, 8),
+                ),
+              ],
+            )
+          : isGradient
+              ? BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: gradientColors ??
+                        [primaryGradientStart, primaryGradientEnd],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: borderRadius ?? BorderRadius.circular(16.h),
+                  boxShadow: [
+                    BoxShadow(
+                      color: primaryGradientStart.withOpacity(0.3),
+                      blurRadius: 15,
+                      offset: Offset(0, 8),
+                    ),
+                  ],
+                )
+              : getButtonDecoration(
+                  bgColor,
+                  borderRadius: borderRadius,
+                  shadow: boxShadow,
+                  border: (isBorder)
+                      ? Border.all(color: borderColor, width: borderWidth!)
+                      : null,
+                ),
       child: Row(
         mainAxisSize: MainAxisSize.max,
         mainAxisAlignment: MainAxisAlignment.center,
@@ -718,4 +754,200 @@ Widget getNotificationDataFormat(
           )
         ],
       ).paddingAll(20.h));
+}
+
+// Modern Card Widget with Enhanced Styling
+Widget getModernCard({
+  required Widget child,
+  EdgeInsetsGeometry? padding,
+  EdgeInsetsGeometry? margin,
+  Color? backgroundColor,
+  double? borderRadius,
+  List<BoxShadow>? boxShadow,
+  bool isGradient = false,
+  List<Color>? gradientColors,
+  bool isGlassmorphism = false,
+  double? elevation,
+}) {
+  return Container(
+    margin: margin,
+    padding: padding ?? EdgeInsets.all(20.h),
+    decoration: isGlassmorphism
+        ? BoxDecoration(
+            gradient: LinearGradient(
+              colors: [glassWhite, glassWhite.withOpacity(0.1)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(borderRadius ?? 20.h),
+            border: Border.all(color: glassBorder, width: 1.5),
+            boxShadow: [
+              BoxShadow(
+                color: glassShadow,
+                blurRadius: 20,
+                offset: Offset(0, 8),
+              ),
+            ],
+          )
+        : isGradient
+            ? BoxDecoration(
+                gradient: LinearGradient(
+                  colors: gradientColors ?? [cardColor, surfaceColor],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(borderRadius ?? 20.h),
+                boxShadow: boxShadow ??
+                    [
+                      BoxShadow(
+                        color: shadowColor,
+                        blurRadius: 15,
+                        offset: Offset(0, 8),
+                      ),
+                    ],
+              )
+            : BoxDecoration(
+                color: backgroundColor ?? cardColor,
+                borderRadius: BorderRadius.circular(borderRadius ?? 20.h),
+                boxShadow: boxShadow ??
+                    [
+                      BoxShadow(
+                        color: shadowColor,
+                        blurRadius: 15,
+                        offset: Offset(0, 8),
+                      ),
+                    ],
+              ),
+    child: child,
+  );
+}
+
+// Enhanced Gradient Button
+Widget getGradientButton(
+  BuildContext context,
+  String text,
+  Function function,
+  double fontsize, {
+  List<Color>? gradientColors,
+  Color textColor = Colors.white,
+  FontWeight weight = FontWeight.w600,
+  double? buttonHeight,
+  double? buttonWidth,
+  BorderRadius? borderRadius,
+  bool isGlassmorphism = false,
+}) {
+  return getButton(
+    context,
+    Colors.transparent,
+    text,
+    textColor,
+    function,
+    fontsize,
+    buttonHeight: buttonHeight ?? 60.h,
+    buttonWidth: buttonWidth,
+    weight: weight,
+    borderRadius: borderRadius ?? BorderRadius.circular(16.h),
+    isGradient: !isGlassmorphism,
+    gradientColors: gradientColors,
+    isGlassmorphism: isGlassmorphism,
+  );
+}
+
+// Modern Floating Action Button
+Widget getModernFAB({
+  required Function onTap,
+  required IconData icon,
+  Color? backgroundColor,
+  Color? iconColor,
+  double? size,
+  bool isGradient = true,
+  List<Color>? gradientColors,
+}) {
+  return Container(
+    width: size ?? 56.h,
+    height: size ?? 56.h,
+    decoration: isGradient
+        ? BoxDecoration(
+            gradient: LinearGradient(
+              colors:
+                  gradientColors ?? [primaryGradientStart, primaryGradientEnd],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: primaryGradientStart.withOpacity(0.4),
+                blurRadius: 20,
+                offset: Offset(0, 8),
+              ),
+            ],
+          )
+        : BoxDecoration(
+            color: backgroundColor ?? pacificBlue,
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: shadowColor,
+                blurRadius: 15,
+                offset: Offset(0, 8),
+              ),
+            ],
+          ),
+    child: Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () => onTap(),
+        borderRadius: BorderRadius.circular(28.h),
+        child: Icon(
+          icon,
+          color: iconColor ?? Colors.white,
+          size: 24.h,
+        ),
+      ),
+    ),
+  );
+}
+
+// Animated Container with Modern Effects
+Widget getAnimatedCard({
+  required Widget child,
+  Duration duration = const Duration(milliseconds: 300),
+  Curve curve = Curves.easeInOut,
+  EdgeInsetsGeometry? padding,
+  EdgeInsetsGeometry? margin,
+  Color? backgroundColor,
+  double? borderRadius,
+  List<BoxShadow>? boxShadow,
+  bool isGradient = false,
+  List<Color>? gradientColors,
+  bool isGlassmorphism = false,
+  double? scale,
+  double? rotation,
+}) {
+  return TweenAnimationBuilder<double>(
+    duration: duration,
+    curve: curve,
+    tween: Tween(begin: 0.0, end: 1.0),
+    builder: (context, value, child) {
+      return Transform.scale(
+        scale: scale ?? (0.8 + (0.2 * value)),
+        child: Transform.rotate(
+          angle: rotation ?? 0,
+          child: getModernCard(
+            child: child!,
+            padding: padding,
+            margin: margin,
+            backgroundColor: backgroundColor,
+            borderRadius: borderRadius,
+            boxShadow: boxShadow,
+            isGradient: isGradient,
+            gradientColors: gradientColors,
+            isGlassmorphism: isGlassmorphism,
+          ),
+        ),
+      );
+    },
+    child: child,
+  );
 }
