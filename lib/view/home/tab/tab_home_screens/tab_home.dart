@@ -47,624 +47,544 @@ class _TabHomeState extends State<TabHome> {
 
   @override
   Widget build(BuildContext context) {
+    // Get screen dimensions for responsive design
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isTablet = screenWidth > 600; // Tablet detection
+
     return GetBuilder<HomeApiController>(
       init: HomeApiController(),
       builder: (homeApiController) => GetBuilder<HomeController>(
         init: HomeController(),
-        builder: (homeController) => Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            getVerSpace(20.h),
-            Row(
+        builder: (homeController) => Scaffold(
+          backgroundColor: Colors.grey[50],
+          body: SafeArea(
+            child: Column(
               children: [
-                getSvgImage("location.svg",
-                    height: 24.h, width: 24.h, color: pacificBlue),
-                getHorSpace(12.h),
+                // Header Section
+                _buildHeader(context, isTablet),
+
+                // Main Content - Scrollable
                 Expanded(
-                    child: getCustomFont(
-                        "Johannesburg, South Africa", 18.sp, Colors.black, 1,
-                        fontWeight: FontWeight.w600)),
-                Container(
-                  width: 44.w,
-                  child: GestureDetector(
-                    onTap: () => _showNotificationModal(context),
-                    child: Stack(
-                      clipBehavior: Clip.none,
+                  child: SingleChildScrollView(
+                    physics: BouncingScrollPhysics(),
+                    child: Column(
                       children: [
-                        Container(
-                          height: 40.h,
-                          width: 40.h,
-                          decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(30.h),
-                              boxShadow: [
-                                BoxShadow(
-                                    color: shadowColor,
-                                    offset: Offset(-4, 5),
-                                    blurRadius: 11)
-                              ]),
-                          padding: EdgeInsets.all(11.h),
-                          child: getSvgImage("notification_bing.svg"),
-                        ),
-                        Obx(
-                          () => notificationService.unreadCount.value > 0
-                              ? Positioned(
-                                  right: -2.w,
-                                  top: -2.h,
-                                  child: Container(
-                                    width: 16.h,
-                                    height: 16.h,
-                                    decoration: BoxDecoration(
-                                      color: accentRed,
-                                      shape: BoxShape.circle,
-                                      border: Border.all(
-                                          color: Colors.white, width: 2),
-                                    ),
-                                    child: Center(
-                                      child: Text(
-                                        notificationService.unreadCount.value
-                                            .toString(),
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 9.sp,
-                                          fontWeight: FontWeight.w600,
-                                          fontFamily: 'SF UI Text',
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                )
-                              : Container(),
-                        )
+                        // Hero Banner
+                        _buildHeroBanner(context, isTablet),
+
+                        // Search Section
+                        _buildSearchSection(context, isTablet),
+
+                        // Estates Section
+                        _buildEstatesSection(context, isTablet),
+
+                        // Bottom padding
+                        SizedBox(height: 20.h),
                       ],
                     ),
                   ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeader(BuildContext context, bool isTablet) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
+      child: Row(
+        children: [
+          getSvgImage("location.svg",
+              height: isTablet ? 20.h : 24.h,
+              width: isTablet ? 20.h : 24.h,
+              color: pacificBlue),
+          getHorSpace(12.w),
+          Expanded(
+            child: getCustomFont("Johannesburg, South Africa",
+                isTablet ? 16.sp : 18.sp, Colors.black, 1,
+                fontWeight: FontWeight.w600),
+          ),
+          GestureDetector(
+            onTap: () => _showNotificationModal(context),
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Container(
+                  height: isTablet ? 36.h : 40.h,
+                  width: isTablet ? 36.h : 40.h,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20.h),
+                    boxShadow: [
+                      BoxShadow(
+                          color: shadowColor,
+                          offset: Offset(0, 2),
+                          blurRadius: 8)
+                    ],
+                  ),
+                  padding: EdgeInsets.all(10.h),
+                  child: getSvgImage("notification_bing.svg"),
+                ),
+                Obx(
+                  () => notificationService.unreadCount.value > 0
+                      ? Positioned(
+                          right: -2.w,
+                          top: -2.h,
+                          child: Container(
+                            width: 16.h,
+                            height: 16.h,
+                            decoration: BoxDecoration(
+                              color: accentRed,
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.white, width: 2),
+                            ),
+                            child: Center(
+                              child: Text(
+                                notificationService.unreadCount.value
+                                    .toString(),
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 9.sp,
+                                  fontWeight: FontWeight.w600,
+                                  fontFamily: 'SF UI Text',
+                                ),
+                              ),
+                            ),
+                          ),
+                        )
+                      : Container(),
                 )
               ],
-            ).marginSymmetric(horizontal: 20.h),
-            getVerSpace(22.h),
-            getCustomFont(
-                    "Select your residential complex and purchase electricity instantly",
-                    16.sp,
-                    hintColor,
-                    1,
-                    fontWeight: FontWeight.w400,
-                    txtHeight: 1.5)
-                .marginSymmetric(horizontal: 20.h),
-            getVerSpace(20.h),
-            getSearchField("Search residential complexes...",
-                prefixiconimage: "search.svg",
-                suffixfunction: () {
-                  Get.to(SearchScreen());
-                },
-                suffixiconimage: "filter_icon.svg",
-                function: () {
-                  Get.to(SearchScreen());
-                }).marginSymmetric(horizontal: 20.w),
-            getVerSpace(20.h),
-            Expanded(
-                flex: 1,
-                child: ListView(
-                  primary: true,
-                  shrinkWrap: false,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeroBanner(BuildContext context, bool isTablet) {
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
+      child: getAnimatedCard(
+        child: Container(
+          height: isTablet ? 140.h : 160.h,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [primaryGradientStart, primaryGradientEnd],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(20.h),
+            boxShadow: [
+              BoxShadow(
+                color: primaryGradientStart.withOpacity(0.25),
+                blurRadius: 18,
+                offset: Offset(0, 10),
+              ),
+            ],
+          ),
+          child: Stack(
+            children: [
+              // Decorative blobs/circles
+              Positioned(
+                right: -20.w,
+                top: -10.h,
+                child: Container(
+                  width: 120.w,
+                  height: 120.w,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white.withOpacity(0.08),
+                  ),
+                ),
+              ),
+              Positioned(
+                right: 20.w,
+                top: 22.h,
+                child: Container(
+                  width: 60.w,
+                  height: 60.w,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white.withOpacity(0.12),
+                  ),
+                ),
+              ),
+              // Content
+              Padding(
+                padding: EdgeInsets.all(20.h),
+                child: Row(
                   children: [
-                    // Enhanced Hero Banner with Modern Design
-                    getAnimatedCard(
-                      child: Container(
-                        height: 160.h,
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          getCustomFont(
+                            "Smart Electricity\nVending System",
+                            isTablet ? 16.sp : 18.sp,
+                            Colors.white,
+                            1,
+                            fontWeight: FontWeight.w800,
+                            txtHeight: 1.2,
+                          ),
+                          getVerSpace(12.h),
+                          Row(
+                            children: [
+                              Icon(Icons.flash_on,
+                                  color: Colors.white70, size: 16.h),
+                              getHorSpace(6.w),
+                              getCustomFont(
+                                "Purchase electricity instantly",
+                                isTablet ? 13.sp : 15.sp,
+                                Colors.white.withOpacity(0.9),
+                                1,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    getGradientButton(
+                      context,
+                      "Buy Now",
+                      () => Get.to(() => ElectricityPurchaseScreen(
+                            complexName: 'Loading...',
+                            tariffRate: 'R0.00/kWh',
+                            meterNumber: 'Loading...',
+                            unitNumber: 'Loading...',
+                          )),
+                      isTablet ? 13.sp : 14.sp,
+                      gradientColors: [
+                        Colors.white,
+                        Colors.white.withOpacity(0.9)
+                      ],
+                      textColor: primaryGradientStart,
+                      buttonHeight: isTablet ? 44.h : 48.h,
+                      borderRadius: BorderRadius.circular(20.h),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        duration: Duration(milliseconds: 600),
+        curve: Curves.elasticOut,
+      ),
+    );
+  }
+
+  Widget _buildSearchSection(BuildContext context, bool isTablet) {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 20.w),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Glass card with search and quick filters
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16.h),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.04),
+                  blurRadius: 12,
+                  offset: Offset(0, 6),
+                ),
+              ],
+              border: Border.all(color: Colors.black.withOpacity(0.04)),
+            ),
+            child: Padding(
+              padding: EdgeInsets.all(12.h),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Headline
+                  getCustomFont(
+                    "Find your complex",
+                    isTablet ? 14.sp : 16.sp,
+                    Colors.black,
+                    1,
+                    fontWeight: FontWeight.w700,
+                  ),
+                  getVerSpace(8.h),
+                  // Search field
+                  getSearchField(
+                    "Search residential complexes...",
+                    prefixiconimage: "search.svg",
+                    suffixfunction: () => Get.to(SearchScreen()),
+                    suffixiconimage: "filter_icon.svg",
+                    function: () => Get.to(SearchScreen()),
+                  ),
+                  getVerSpace(12.h),
+                  // Quick filter chips
+                  GetBuilder<HomeController>(
+                    builder: (controller) => Wrap(
+                      spacing: 8.w,
+                      runSpacing: 8.h,
+                      children: List.generate(categoryLists.length, (index) {
+                        final item = categoryLists[index];
+                        final bool selected =
+                            controller.category.value == index;
+                        return GestureDetector(
+                          onTap: () => controller.categoryChange(index),
+                          child: Container(
+                            padding: EdgeInsets.symmetric(
+                                horizontal: 12.w, vertical: 8.h),
+                            decoration: BoxDecoration(
+                              color: selected
+                                  ? primaryGradientStart.withOpacity(0.12)
+                                  : surfaceColor,
+                              borderRadius: BorderRadius.circular(20.h),
+                              border: Border.all(
+                                color: selected
+                                    ? primaryGradientStart
+                                    : Colors.black.withOpacity(0.08),
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                if (item.image.isNotEmpty) ...[
+                                  getAssetImage(item.image,
+                                      width: 14.h, height: 14.h),
+                                  getHorSpace(6.w),
+                                ],
+                                getCustomFont(
+                                  item.name,
+                                  isTablet ? 12.sp : 13.sp,
+                                  selected ? primaryGradientStart : textPrimary,
+                                  1,
+                                  fontWeight: selected
+                                      ? FontWeight.w700
+                                      : FontWeight.w500,
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      }),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          getVerSpace(16.h),
+        ],
+      ),
+    );
+  }
+
+  // Deprecated: categories section is replaced by quick filter chips in search
+
+  Widget _buildEstatesSection(BuildContext context, bool isTablet) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            getCustomFont("Available Residential Complexes",
+                isTablet ? 16.sp : 18.sp, Colors.black, 1,
+                fontWeight: FontWeight.w600, txtHeight: 1.5),
+            GestureDetector(
+              onTap: () => Get.to(RecomendedScreen()),
+              child: getCustomFont(
+                  "View All", isTablet ? 12.sp : 14.sp, hintColor, 1,
+                  fontWeight: FontWeight.w400, txtHeight: 1.5),
+            )
+          ],
+        ).marginSymmetric(horizontal: 20.w),
+        getVerSpace(16.h),
+        SizedBox(
+          height: isTablet ? 180.h : 200.h,
+          child: GetBuilder<HomeController>(
+            builder: (controller) => Obx(() {
+              if (estateService.isLoading.value) {
+                return Center(
+                    child: CircularProgressIndicator(color: pacificBlue));
+              }
+
+              if (estateService.estates.isEmpty) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.home_work, size: 40.sp, color: hintColor),
+                      getVerSpace(12.h),
+                      getCustomFont(
+                          "No estates available", 14.sp, hintColor, 1),
+                      getVerSpace(12.h),
+                      ElevatedButton(
+                        onPressed: () => estateService.fetchEstates(),
+                        child: Text("Retry"),
+                      ),
+                    ],
+                  ),
+                );
+              }
+
+              // Filter estates based on selected category
+              List<Estate> filteredEstates = _getFilteredEstates(
+                  estateService.estates, controller.category.value);
+
+              if (filteredEstates.isEmpty) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.home_work, size: 40.sp, color: hintColor),
+                      getVerSpace(12.h),
+                      getCustomFont(
+                          "No complexes available", 14.sp, hintColor, 1),
+                    ],
+                  ),
+                );
+              }
+
+              return ListView.builder(
+                itemCount: filteredEstates.length,
+                scrollDirection: Axis.horizontal,
+                padding: EdgeInsets.symmetric(horizontal: 20.w),
+                itemBuilder: (context, index) {
+                  Estate estate = filteredEstates[index];
+                  return _buildEstateCard(estate, index, isTablet);
+                },
+              );
+            }),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildEstateCard(Estate estate, int index, bool isTablet) {
+    return GestureDetector(
+      onTap: () {
+        Get.to(() => ElectricityPurchaseScreen(
+              complexName: estate.name,
+              tariffRate: estate.formattedTariff,
+              meterNumber: 'Loading...',
+              unitNumber: 'Loading...',
+            ));
+      },
+      child: Container(
+        width: isTablet ? 240.w : 260.w,
+        margin: EdgeInsets.only(right: 16.w),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16.h),
+          boxShadow: [
+            BoxShadow(
+              color: shadowColor,
+              offset: Offset(0, 4),
+              blurRadius: 12,
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Image Section
+            Container(
+              height: isTablet ? 80.h : 90.h,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.vertical(top: Radius.circular(16.h)),
+                image: estate.primaryImageUrl.isNotEmpty
+                    ? DecorationImage(
+                        image: NetworkImage(
+                            'http://localhost:3000${estate.primaryImageUrl}'),
+                        fit: BoxFit.cover,
+                        onError: (exception, stackTrace) {
+                          print('Error loading image: $exception');
+                        },
+                      )
+                    : DecorationImage(
+                        image: AssetImage(
+                            "${Constant.assetImagePath}recomended1.png"),
+                        fit: BoxFit.cover,
+                      ),
+              ),
+            ),
+            // Content Section
+            Padding(
+              padding: EdgeInsets.all(isTablet ? 12.h : 14.h),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  getCustomFont(
+                    estate.name,
+                    isTablet ? 14.sp : 16.sp,
+                    textPrimary,
+                    1,
+                    fontWeight: FontWeight.w700,
+                    txtHeight: 1.2,
+                  ),
+                  getVerSpace(isTablet ? 6.h : 8.h),
+                  Row(
+                    children: [
+                      Icon(Icons.location_on, color: pacificBlue, size: 14.h),
+                      getHorSpace(4.w),
+                      Expanded(
+                        child: getCustomFont(
+                          "${estate.address.city}, ${estate.address.province}",
+                          isTablet ? 11.sp : 12.sp,
+                          textSecondary,
+                          1,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                  getVerSpace(isTablet ? 8.h : 10.h),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Container(
+                        padding: EdgeInsets.symmetric(
+                            horizontal: isTablet ? 8.w : 10.w,
+                            vertical: isTablet ? 4.h : 5.h),
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
                             colors: [primaryGradientStart, primaryGradientEnd],
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                           ),
-                          borderRadius: BorderRadius.circular(24.h),
-                          boxShadow: [
-                            BoxShadow(
-                              color: primaryGradientStart.withOpacity(0.3),
-                              blurRadius: 20,
-                              offset: Offset(0, 10),
-                            ),
-                          ],
+                          borderRadius: BorderRadius.circular(8.h),
                         ),
-                        child: Stack(
-                          children: [
-                            // Background Pattern
-                            Positioned(
-                              right: -20.w,
-                              top: -20.h,
-                              child: Container(
-                                width: 120.w,
-                                height: 120.h,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: Colors.white.withOpacity(0.1),
-                                ),
-                              ),
-                            ),
-                            Positioned(
-                              right: 20.w,
-                              top: 20.h,
-                              child: Container(
-                                width: 60.w,
-                                height: 60.h,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: Colors.white.withOpacity(0.15),
-                                ),
-                              ),
-                            ),
-                            // Content
-                            Padding(
-                              padding: EdgeInsets.all(24.h),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Icon(
-                                        Icons.flash_on,
-                                        color: Colors.white,
-                                        size: 28.h,
-                                      ),
-                                      getHorSpace(12.w),
-                                      Expanded(
-                                        child: getMultilineCustomFont(
-                                          "Smart Electricity\nVending System",
-                                          18.sp,
-                                          Colors.white,
-                                          fontWeight: FontWeight.w700,
-                                          txtHeight: 1.3,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  getVerSpace(20.h),
-                                  getGradientButton(
-                                    context,
-                                    "Purchase Now",
-                                    () =>
-                                        Get.to(() => ElectricityPurchaseScreen(
-                                              complexName: 'Loading...',
-                                              tariffRate: 'R0.00/kWh',
-                                              meterNumber: 'Loading...',
-                                              unitNumber: 'Loading...',
-                                            )),
-                                    14.sp,
-                                    gradientColors: [
-                                      Colors.white,
-                                      Colors.white.withOpacity(0.9)
-                                    ],
-                                    textColor: primaryGradientStart,
-                                    buttonHeight: 44.h,
-                                    borderRadius: BorderRadius.circular(22.h),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
+                        child: getCustomFont(
+                          estate.formattedTariff,
+                          isTablet ? 10.sp : 12.sp,
+                          Colors.white,
+                          1,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
-                      margin: EdgeInsets.symmetric(horizontal: 20.h),
-                      duration: Duration(milliseconds: 600),
-                      curve: Curves.elasticOut,
-                    ),
-                    getVerSpace(30.h),
-                    getCustomFont("Complex Categories", 18.sp, Colors.black, 1,
-                            fontWeight: FontWeight.w600, txtHeight: 1.5)
-                        .marginSymmetric(horizontal: 20.h),
-                    getVerSpace(20.h),
-                    SizedBox(
-                      height: 60.h,
-                      child: ListView.builder(
-                        itemCount: categoryLists.length,
-                        primary: false,
-                        shrinkWrap: true,
-                        scrollDirection: Axis.horizontal,
-                        itemBuilder: (context, index) {
-                          ModelCategory modelCategory = categoryLists[index];
-                          return GestureDetector(
-                            onTap: () {
-                              controller.categoryChange(index);
-                            },
-                            child: GetBuilder<HomeController>(
-                              init: HomeController(),
-                              builder: (controller) => getAnimatedCard(
-                                child: Container(
-                                  alignment: Alignment.center,
-                                  padding: EdgeInsets.symmetric(
-                                      horizontal: 20.h, vertical: 16.h),
-                                  decoration: BoxDecoration(
-                                    gradient: controller.category == index
-                                        ? LinearGradient(
-                                            colors: [
-                                              primaryGradientStart,
-                                              primaryGradientEnd
-                                            ],
-                                            begin: Alignment.topLeft,
-                                            end: Alignment.bottomRight,
-                                          )
-                                        : LinearGradient(
-                                            colors: [
-                                              Colors.white,
-                                              surfaceColor
-                                            ],
-                                            begin: Alignment.topLeft,
-                                            end: Alignment.bottomRight,
-                                          ),
-                                    borderRadius: BorderRadius.circular(20.h),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: controller.category == index
-                                            ? primaryGradientStart
-                                                .withOpacity(0.3)
-                                            : shadowColor,
-                                        offset: Offset(0, 8),
-                                        blurRadius: 15,
-                                      ),
-                                    ],
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      if (modelCategory.image != "")
-                                        Row(
-                                          children: [
-                                            Container(
-                                              padding: EdgeInsets.all(8.h),
-                                              decoration: BoxDecoration(
-                                                color:
-                                                    controller.category == index
-                                                        ? Colors.white
-                                                            .withOpacity(0.2)
-                                                        : primaryGradientStart
-                                                            .withOpacity(0.1),
-                                                borderRadius:
-                                                    BorderRadius.circular(12.h),
-                                              ),
-                                              child: getAssetImage(
-                                                modelCategory.image,
-                                                width: 24.h,
-                                                height: 24.h,
-                                              ),
-                                            ),
-                                            getHorSpace(12.h),
-                                          ],
-                                        ),
-                                      getCustomFont(
-                                        modelCategory.name,
-                                        16.sp,
-                                        controller.category == index
-                                            ? Colors.white
-                                            : textPrimary,
-                                        1,
-                                        fontWeight: controller.category == index
-                                            ? FontWeight.w700
-                                            : FontWeight.w600,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                margin: EdgeInsets.only(
-                                  left: index == 0 ? 20.h : 0,
-                                  right: 20.h,
-                                ),
-                                duration: Duration(milliseconds: 300),
-                                curve: Curves.easeInOut,
-                              ),
-                            ),
-                          );
-                        },
+                      Row(
+                        children: [
+                          Icon(Icons.home_work,
+                              color: textSecondary, size: 12.h),
+                          getHorSpace(2.w),
+                          getCustomFont(
+                            "${estate.totalUnits} units",
+                            isTablet ? 10.sp : 12.sp,
+                            textSecondary,
+                            1,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ],
                       ),
-                    ),
-                    getVerSpace(30.h),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        getCustomFont("Available Residential Complexes", 18.sp,
-                            Colors.black, 1,
-                            fontWeight: FontWeight.w600, txtHeight: 1.5),
-                        GestureDetector(
-                          onTap: () {
-                            Get.to(RecomendedScreen());
-                          },
-                          child: getCustomFont("View All", 14.sp, hintColor, 1,
-                              fontWeight: FontWeight.w400, txtHeight: 1.5),
-                        )
-                      ],
-                    ).marginSymmetric(horizontal: 20.h),
-                    SizedBox(
-                      height: 340.h,
-                      child: Obx(() {
-                        if (estateService.isLoading.value) {
-                          return Center(
-                            child:
-                                CircularProgressIndicator(color: pacificBlue),
-                          );
-                        }
-
-                        if (estateService.estates.isEmpty) {
-                          return Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.home_work,
-                                    size: 48.sp, color: hintColor),
-                                getVerSpace(16.h),
-                                getCustomFont("No estates available", 16.sp,
-                                    hintColor, 1),
-                                getVerSpace(16.h),
-                                ElevatedButton(
-                                  onPressed: () => estateService.fetchEstates(),
-                                  child: Text("Retry"),
-                                ),
-                              ],
-                            ),
-                          );
-                        }
-
-                        return ListView.builder(
-                          itemCount: estateService.estates.length,
-                          primary: false,
-                          shrinkWrap: true,
-                          scrollDirection: Axis.horizontal,
-                          itemBuilder: (context, index) {
-                            Estate estate = estateService.estates[index];
-                            return GestureDetector(
-                              onTap: () {
-                                Get.to(() => ElectricityPurchaseScreen(
-                                      complexName: estate.name,
-                                      tariffRate: estate.formattedTariff,
-                                      meterNumber: 'Loading...',
-                                      unitNumber: 'Loading...',
-                                    ));
-                              },
-                              child: getAnimatedCard(
-                                child: Container(
-                                  width: 340.h,
-                                  decoration: BoxDecoration(
-                                    gradient: LinearGradient(
-                                      colors: [cardColor, surfaceColor],
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
-                                    ),
-                                    borderRadius: BorderRadius.circular(24.h),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: shadowColor,
-                                        offset: Offset(0, 12),
-                                        blurRadius: 25,
-                                      ),
-                                    ],
-                                  ),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      // Enhanced Image Section
-                                      Container(
-                                        height: 140.h,
-                                        decoration: BoxDecoration(
-                                          borderRadius: BorderRadius.vertical(
-                                            top: Radius.circular(24.h),
-                                          ),
-                                          image: estate
-                                                  .primaryImageUrl.isNotEmpty
-                                              ? DecorationImage(
-                                                  image: NetworkImage(
-                                                    'http://localhost:3000${estate.primaryImageUrl}',
-                                                  ),
-                                                  fit: BoxFit.cover,
-                                                  onError:
-                                                      (exception, stackTrace) {
-                                                    print(
-                                                        'Error loading image: $exception');
-                                                  },
-                                                )
-                                              : DecorationImage(
-                                                  image: AssetImage(
-                                                      "${Constant.assetImagePath}recomended1.png"),
-                                                  fit: BoxFit.cover,
-                                                ),
-                                        ),
-                                        child: Stack(
-                                          children: [
-                                            // Gradient Overlay
-                                            Container(
-                                              decoration: BoxDecoration(
-                                                borderRadius:
-                                                    BorderRadius.vertical(
-                                                  top: Radius.circular(24.h),
-                                                ),
-                                                gradient: LinearGradient(
-                                                  colors: [
-                                                    Colors.transparent,
-                                                    Colors.black
-                                                        .withOpacity(0.3),
-                                                  ],
-                                                  begin: Alignment.topCenter,
-                                                  end: Alignment.bottomCenter,
-                                                ),
-                                              ),
-                                            ),
-                                            // Bookmark Button
-                                            Positioned(
-                                              top: 16.h,
-                                              right: 16.w,
-                                              child: Container(
-                                                height: 40.h,
-                                                width: 40.h,
-                                                decoration: BoxDecoration(
-                                                  color: Colors.white
-                                                      .withOpacity(0.9),
-                                                  shape: BoxShape.circle,
-                                                  boxShadow: [
-                                                    BoxShadow(
-                                                      color: Colors.black
-                                                          .withOpacity(0.1),
-                                                      blurRadius: 8,
-                                                      offset: Offset(0, 4),
-                                                    ),
-                                                  ],
-                                                ),
-                                                child: Icon(
-                                                  Icons.bookmark_border,
-                                                  color: pacificBlue,
-                                                  size: 20.h,
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      // Enhanced Content Section
-                                      Padding(
-                                        padding: EdgeInsets.all(20.h),
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            // Estate Name with Modern Typography
-                                            getCustomFont(
-                                              estate.name,
-                                              18.sp,
-                                              textPrimary,
-                                              1,
-                                              fontWeight: FontWeight.w700,
-                                              txtHeight: 1.3,
-                                            ),
-                                            getVerSpace(12.h),
-                                            // Location with Enhanced Icon
-                                            Row(
-                                              children: [
-                                                Container(
-                                                  padding: EdgeInsets.all(6.h),
-                                                  decoration: BoxDecoration(
-                                                    color: primaryGradientStart
-                                                        .withOpacity(0.1),
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            8.h),
-                                                  ),
-                                                  child: Icon(
-                                                    Icons.location_on,
-                                                    color: primaryGradientStart,
-                                                    size: 16.h,
-                                                  ),
-                                                ),
-                                                getHorSpace(8.w),
-                                                Expanded(
-                                                  child: getCustomFont(
-                                                    "${estate.address.city}, ${estate.address.province}",
-                                                    14.sp,
-                                                    textSecondary,
-                                                    1,
-                                                    fontWeight: FontWeight.w500,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                            getVerSpace(8.h),
-                                            // Estate Type
-                                            Container(
-                                              padding: EdgeInsets.symmetric(
-                                                horizontal: 12.h,
-                                                vertical: 6.h,
-                                              ),
-                                              decoration: BoxDecoration(
-                                                color: secondaryGradientStart
-                                                    .withOpacity(0.1),
-                                                borderRadius:
-                                                    BorderRadius.circular(12.h),
-                                              ),
-                                              child: getCustomFont(
-                                                estate.type,
-                                                12.sp,
-                                                secondaryGradientStart,
-                                                1,
-                                                fontWeight: FontWeight.w600,
-                                              ),
-                                            ),
-                                            getVerSpace(16.h),
-                                            // Enhanced Bottom Section
-                                            Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment
-                                                      .spaceBetween,
-                                              children: [
-                                                // Tariff Rate with Modern Design
-                                                Container(
-                                                  padding: EdgeInsets.symmetric(
-                                                    horizontal: 12.h,
-                                                    vertical: 8.h,
-                                                  ),
-                                                  decoration: BoxDecoration(
-                                                    gradient: LinearGradient(
-                                                      colors: [
-                                                        primaryGradientStart,
-                                                        primaryGradientEnd
-                                                      ],
-                                                      begin: Alignment.topLeft,
-                                                      end:
-                                                          Alignment.bottomRight,
-                                                    ),
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            12.h),
-                                                  ),
-                                                  child: getCustomFont(
-                                                    estate.formattedTariff,
-                                                    14.sp,
-                                                    Colors.white,
-                                                    1,
-                                                    fontWeight: FontWeight.w700,
-                                                  ),
-                                                ),
-                                                // Units Count with Icon
-                                                Row(
-                                                  children: [
-                                                    Icon(
-                                                      Icons.home_work,
-                                                      color: textSecondary,
-                                                      size: 16.h,
-                                                    ),
-                                                    getHorSpace(4.w),
-                                                    getCustomFont(
-                                                      "${estate.totalUnits} units",
-                                                      14.sp,
-                                                      textSecondary,
-                                                      1,
-                                                      fontWeight:
-                                                          FontWeight.w600,
-                                                    ),
-                                                  ],
-                                                ),
-                                              ],
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                margin: EdgeInsets.only(
-                                  left: index == 0 ? 20.h : 0,
-                                  right: 20.h,
-                                  bottom: 40.h,
-                                  top: 20.h,
-                                ),
-                                duration:
-                                    Duration(milliseconds: 400 + (index * 100)),
-                                curve: Curves.easeOutBack,
-                              ),
-                            );
-                          },
-                        );
-                      }),
-                    ),
-                  ],
-                ))
+                    ],
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
       ),
@@ -921,5 +841,27 @@ class _TabHomeState extends State<TabHome> {
     setState(() {
       notification.isRead = true;
     });
+  }
+
+  List<Estate> _getFilteredEstates(List<Estate> estates, int categoryIndex) {
+    if (categoryIndex == 0) {
+      // "All Complexes" - return all estates
+      return estates;
+    } else if (categoryIndex == 1) {
+      // "Residential" - filter by residential type
+      return estates
+          .where((estate) =>
+              estate.type.toLowerCase().contains('residential') ||
+              estate.type.toLowerCase().contains('residential complex'))
+          .toList();
+    } else if (categoryIndex == 2) {
+      // "Student Housing" - filter by student accommodation
+      return estates
+          .where((estate) =>
+              estate.type.toLowerCase().contains('student') ||
+              estate.type.toLowerCase().contains('accommodation'))
+          .toList();
+    }
+    return estates;
   }
 }

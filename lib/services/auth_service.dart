@@ -79,7 +79,7 @@ class AuthService extends GetxService {
       isLoading.value = true;
 
       final response = await _apiService.post<Map<String, dynamic>>(
-        '/auth/login',
+        'auth/login/',
         data: {
           'email': email,
           'password': password,

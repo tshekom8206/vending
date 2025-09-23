@@ -88,3 +88,4 @@ echo "  - PM2 start: pm2 start ecosystem.config.js"
 echo "  - PM2 status: pm2 list"
 echo "  - PM2 logs: pm2 logs"
 echo "  - Health check: curl http://localhost:3000/health"
+

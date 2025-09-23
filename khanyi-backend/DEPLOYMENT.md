@@ -284,3 +284,4 @@ find $BACKUP_DIR -name "khanyi-backend-*.tar.gz" -mtime +7 -delete
 
 3. **Database Indexing**: Ensure proper MongoDB indexes
 4. **Memory Management**: Monitor memory usage with `htop` or `free -h`
+

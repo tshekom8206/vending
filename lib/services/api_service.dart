@@ -108,7 +108,7 @@ class ApiService {
     try {
       print('🔥 FETCH PURCHASES RAW: Starting direct HTTP call');
       final headers = await _buildHeaders();
-      final uri = Uri.parse('$baseUrl/purchases');
+      final uri = Uri.parse('$baseUrl' + 'purchases');
 
       print('🌐 HTTP GET Request: $uri');
       final response = await http.get(uri, headers: headers);

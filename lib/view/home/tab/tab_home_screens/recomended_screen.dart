@@ -6,6 +6,7 @@ import 'package:khanyi_vending_app/util/constant.dart';
 import 'package:khanyi_vending_app/view/home/tab/tab_home_screens/detail_screen.dart';
 import 'package:khanyi_vending_app/services/estate_service.dart';
 import 'package:khanyi_vending_app/model/api_models.dart';
+import 'package:khanyi_vending_app/config/environment.dart';
 
 import '../../../../util/color_category.dart';
 import '../../../../util/constant_widget.dart';
@@ -38,6 +39,7 @@ class _RecomendedScreenState extends State<RecomendedScreen> {
   void _onSearchChanged(String query) {
     searchQuery.value = query;
   }
+
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
@@ -61,46 +63,38 @@ class _RecomendedScreenState extends State<RecomendedScreen> {
               Container(
                 margin: EdgeInsets.symmetric(horizontal: 20.w),
                 decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16.h),
-                  boxShadow: [
-                    BoxShadow(
-                      color: shadowColor.withOpacity(0.1),
-                      offset: Offset(0, 2),
-                      blurRadius: 8
-                    )
-                  ]
-                ),
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16.h),
+                    boxShadow: [
+                      BoxShadow(
+                          color: shadowColor.withOpacity(0.1),
+                          offset: Offset(0, 2),
+                          blurRadius: 8)
+                    ]),
                 child: TextField(
                   controller: searchController,
                   onChanged: _onSearchChanged,
                   decoration: InputDecoration(
-                    hintText: 'Search estates by name or location...',
-                    hintStyle: TextStyle(
-                      fontSize: 14.sp,
-                      color: hintColor,
-                      fontWeight: FontWeight.w400
-                    ),
-                    prefixIcon: Icon(
-                      Icons.search,
-                      color: hintColor,
-                      size: 20.h
-                    ),
-                    suffixIcon: Obx(() => searchQuery.value.isNotEmpty
-                      ? IconButton(
-                          icon: Icon(Icons.clear, color: hintColor, size: 20.h),
-                          onPressed: () {
-                            searchController.clear();
-                            _onSearchChanged('');
-                          },
-                        )
-                      : SizedBox.shrink()),
-                    border: InputBorder.none,
-                    contentPadding: EdgeInsets.symmetric(
-                      horizontal: 16.w,
-                      vertical: 12.h
-                    )
-                  ),
+                      hintText: 'Search estates by name or location...',
+                      hintStyle: TextStyle(
+                          fontSize: 14.sp,
+                          color: hintColor,
+                          fontWeight: FontWeight.w400),
+                      prefixIcon:
+                          Icon(Icons.search, color: hintColor, size: 20.h),
+                      suffixIcon: Obx(() => searchQuery.value.isNotEmpty
+                          ? IconButton(
+                              icon: Icon(Icons.clear,
+                                  color: hintColor, size: 20.h),
+                              onPressed: () {
+                                searchController.clear();
+                                _onSearchChanged('');
+                              },
+                            )
+                          : SizedBox.shrink()),
+                      border: InputBorder.none,
+                      contentPadding: EdgeInsets.symmetric(
+                          horizontal: 16.w, vertical: 12.h)),
                 ),
               ),
               getVerSpace(20.h),
@@ -124,12 +118,8 @@ class _RecomendedScreenState extends State<RecomendedScreen> {
                           ),
                           getVerSpace(16.h),
                           getCustomFont(
-                            'No estates available',
-                            16.sp,
-                            regularBlack,
-                            1,
-                            fontWeight: FontWeight.w600
-                          ),
+                              'No estates available', 16.sp, regularBlack, 1,
+                              fontWeight: FontWeight.w600),
                         ],
                       ),
                     );
@@ -137,8 +127,8 @@ class _RecomendedScreenState extends State<RecomendedScreen> {
 
                   // Calculate filtered list inline
                   List<Estate> displayEstates = searchQuery.value.isEmpty
-                    ? estateService.estates
-                    : estateService.searchEstates(searchQuery.value);
+                      ? estateService.estates
+                      : estateService.searchEstates(searchQuery.value);
 
                   if (displayEstates.isEmpty && searchQuery.value.isNotEmpty) {
                     return Center(
@@ -152,20 +142,12 @@ class _RecomendedScreenState extends State<RecomendedScreen> {
                           ),
                           getVerSpace(16.h),
                           getCustomFont(
-                            'No estates found',
-                            16.sp,
-                            regularBlack,
-                            1,
-                            fontWeight: FontWeight.w600
-                          ),
+                              'No estates found', 16.sp, regularBlack, 1,
+                              fontWeight: FontWeight.w600),
                           getVerSpace(8.h),
-                          getCustomFont(
-                            'Try searching with different keywords',
-                            14.sp,
-                            hintColor,
-                            1,
-                            fontWeight: FontWeight.w400
-                          ),
+                          getCustomFont('Try searching with different keywords',
+                              14.sp, hintColor, 1,
+                              fontWeight: FontWeight.w400),
                         ],
                       ),
                     );
@@ -202,7 +184,7 @@ class _RecomendedScreenState extends State<RecomendedScreen> {
                                       image: estate.primaryImageUrl.isNotEmpty
                                           ? DecorationImage(
                                               image: NetworkImage(
-                                                  'http://localhost:3000${estate.primaryImageUrl}'),
+                                                  '${Environment.baseUrl}${estate.primaryImageUrl}'),
                                               fit: BoxFit.cover)
                                           : DecorationImage(
                                               image: AssetImage(
@@ -215,17 +197,20 @@ class _RecomendedScreenState extends State<RecomendedScreen> {
                                       GestureDetector(
                                         onTap: () {
                                           // TODO: Implement save/favorite functionality for estates
-                                          Get.snackbar('Info', 'Favorite functionality not yet implemented');
+                                          Get.snackbar('Info',
+                                              'Favorite functionality not yet implemented');
                                         },
                                         child: Container(
                                           height: 36.h,
                                           width: 36.h,
                                           decoration: BoxDecoration(
                                               shape: BoxShape.circle,
-                                              color:
-                                                  regularBlack.withOpacity(0.50)),
-                                          child: getSvgImage("savewithoutfill.svg",
-                                                  height: 20.h, width: 20.w)
+                                              color: regularBlack
+                                                  .withOpacity(0.50)),
+                                          child: getSvgImage(
+                                                  "savewithoutfill.svg",
+                                                  height: 20.h,
+                                                  width: 20.w)
                                               .marginAll(8.h),
                                         ),
                                       )
@@ -235,28 +220,32 @@ class _RecomendedScreenState extends State<RecomendedScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   getVerSpace(13.h),
-                                  getCustomFont(estate.name, 16.sp,
-                                      Colors.black, 1,
+                                  getCustomFont(
+                                      estate.name, 16.sp, Colors.black, 1,
                                       fontWeight: FontWeight.w600,
                                       txtHeight: 1.5),
                                   getVerSpace(12.h),
                                   Row(
                                     children: [
                                       getSvgImage("location_unselect.svg",
-                                          height: 20.h, width: 20.h, color: pacificBlue),
+                                          height: 20.h,
+                                          width: 20.h,
+                                          color: pacificBlue),
                                       getHorSpace(12.h),
                                       Expanded(
                                         child: getCustomFont(
                                             "${estate.address.city}, ${estate.address.province}",
-                                            16.sp, hintColor, 1,
+                                            16.sp,
+                                            hintColor,
+                                            1,
                                             fontWeight: FontWeight.w400),
                                       ),
                                       getHorSpace(12.h),
                                       getAssetImage("black_dot.png",
                                           height: 6.h, width: 6.w),
                                       getHorSpace(12.h),
-                                      getCustomFont(estate.type, 16.sp,
-                                          hintColor, 1,
+                                      getCustomFont(
+                                          estate.type, 16.sp, hintColor, 1,
                                           fontWeight: FontWeight.w400),
                                     ],
                                   ),
@@ -267,15 +256,12 @@ class _RecomendedScreenState extends State<RecomendedScreen> {
                                     children: [
                                       Row(
                                         children: [
-                                          getCustomFont(
-                                              estate.formattedTariff,
-                                              14.sp,
-                                              pacificBlue,
-                                              1,
+                                          getCustomFont(estate.formattedTariff,
+                                              14.sp, pacificBlue, 1,
                                               fontWeight: FontWeight.w600),
                                           getHorSpace(2.w),
-                                          getCustomFont(
-                                              "electricity", 14.sp, hintColor, 1,
+                                          getCustomFont("electricity", 14.sp,
+                                              hintColor, 1,
                                               fontWeight: FontWeight.w400),
                                         ],
                                       ),
@@ -284,12 +270,15 @@ class _RecomendedScreenState extends State<RecomendedScreen> {
                                           getSvgImage("maximize.svg",
                                               height: 20.h, width: 20.w),
                                           getHorSpace(7.w),
-                                          getCustomFont("${estate.availableUnits}",
-                                              16.sp, regularBlack, 1,
+                                          getCustomFont(
+                                              "${estate.availableUnits}",
+                                              16.sp,
+                                              regularBlack,
+                                              1,
                                               fontWeight: FontWeight.w600),
                                           getHorSpace(4.w),
-                                          getCustomFont("units",
-                                              12.sp, hintColor, 1,
+                                          getCustomFont(
+                                              "units", 12.sp, hintColor, 1,
                                               fontWeight: FontWeight.w400),
                                         ],
                                       )

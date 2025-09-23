@@ -1,8 +1,10 @@
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class Environment {
+  static String get baseUrl =>
+      dotenv.env['BASE_URL'] ?? 'http://144.126.196.146:5000';
   static String get apiBaseUrl =>
-      dotenv.env['API_BASE_URL'] ?? 'http://192.168.1.104:3000';
+      dotenv.env['API_BASE_URL'] ?? '${baseUrl}/api/v1/';
   static String get appName => dotenv.env['APP_NAME'] ?? 'Khanyi Vending App';
   static String get appVersion => dotenv.env['APP_VERSION'] ?? '1.0.0';
 
